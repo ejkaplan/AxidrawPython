@@ -1,5 +1,6 @@
 import axi
 import random
+from utils import merge_paths
 
 
 def tile(x, y, w, h):
@@ -22,10 +23,12 @@ def ten_print(rows, cols):
 
 
 def main():
-    paths = ten_print(50, 50)
-    drawing = axi.Drawing(paths).rotate_and_scale_to_fit(11, 8.5, 0.5).sort_paths()
+    paths = ten_print(30, 20)
+    paths = merge_paths(paths)
+    drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()
+    drawing = drawing.center(11, 8.5)
     im = drawing.render()
-    im.write_to_png('out.png')
+    # im.write_to_png('out.png')
     axi.draw(drawing)
 
 
