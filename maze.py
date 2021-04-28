@@ -5,6 +5,7 @@ import axi
 from utils import merge_paths
 
 DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+coord = tuple[float, float]
 
 
 def reverse_direction(direction):
@@ -36,7 +37,7 @@ class Cell:
         return f"Cell@({self.coords}"
 
 
-def make_grid(rows, cols):
+def make_grid(rows: int, cols: int) -> list[list[Cell]]:
     cells = [[Cell(r, c) for c in range(cols)] for r in range(rows)]
     for r in range(rows):
         for c in range(cols):
@@ -47,7 +48,7 @@ def make_grid(rows, cols):
     return cells
 
 
-def dfs_maze(rows: int, cols: int, p_random: float = 0):
+def dfs_maze(rows: int, cols: int, p_random: float = 0) -> list[list[Cell]]:
     cells = make_grid(rows, cols)
     start = random.choice(random.choice(cells))
     frontier = [start]
@@ -69,25 +70,27 @@ def dfs_maze(rows: int, cols: int, p_random: float = 0):
     return cells
 
 
-def make_paths(cells):
+def make_paths(cells: list[list[Cell]]) -> list[list[coord]]:
     paths = []
     # Render the Maze
     for row in cells:
         for cell in row:
             r, c = cell.coords
-            if cell.walls[(-1, 0)]:
-                paths.append([(r, c), (r, c + 1)])  # NORTH WALL
             if cell.walls[(0, -1)]:
-                paths.append([(r, c), (r + 1, c)])  # WEST WALL
+                paths.append([(c, r), (c, r + 1)])  # NORTH WALL
+            if cell.walls[(-1, 0)]:
+                paths.append([(c, r), (c + 1, r)])  # WEST WALL
     # Render the two missing walls
     rows = len(cells)
     cols = len(cells[0])
-    paths.append([(0, cols), (rows, cols), (rows, 0)])
+    paths.append([(cols, 0), (cols, rows), (0, rows)])
     return paths
 
 
 def main():
-    cells = dfs_maze(30, 30, 0.05)
+    rows = 40
+    cols = round(rows * 11 / 8.5)
+    cells = dfs_maze(rows, cols, 0.1)
     paths = make_paths(cells)
     paths = merge_paths(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()
