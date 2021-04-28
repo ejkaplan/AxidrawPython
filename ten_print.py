@@ -15,21 +15,23 @@ def tile(x, y, w, h):
 
 
 def ten_print(rows, cols):
-    paths = []
-    for y in range(cols):
-        for x in range(rows):
+    paths = [[(0, 0), (0, rows), (cols, rows), (cols, 0), (0, 0)]]
+    for y in range(rows):
+        for x in range(cols):
             paths.append(tile(x, y, 1, 1))
     return paths
 
 
 def main():
-    paths = ten_print(30, 20)
+    paths = ten_print(30, 40)
     paths = merge_paths(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()
     drawing = drawing.center(11, 8.5)
-    im = drawing.render()
-    # im.write_to_png('out.png')
-    axi.draw(drawing)
+    if axi.device.find_port() is None:
+        im = drawing.render()
+        im.write_to_png('out.png')
+    else:
+        axi.draw(drawing)
 
 
 if __name__ == "__main__":
