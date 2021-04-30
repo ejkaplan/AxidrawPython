@@ -4,13 +4,15 @@ import random
 
 H, W = axi.A3_SIZE
 
+
 def text(font):
     text = ''.join(map(chr, list(range(32, 128))))
     n = 96 // 3
-    text = '\n'.join(text[i:i+n] for i in range(0, 96, n))
+    text = '\n'.join(text[i:i + n] for i in range(0, 96, n))
     d = font.wrap(text, W, 1.5)
     d = d.center(12, 8.5)
     return d
+
 
 def vertical_stack(ds, spacing=0):
     result = axi.Drawing()
@@ -21,6 +23,7 @@ def vertical_stack(ds, spacing=0):
         y += d.height + spacing
     return result
 
+
 def horizontal_stack(ds, spacing=0):
     result = axi.Drawing()
     x = 0
@@ -29,6 +32,7 @@ def horizontal_stack(ds, spacing=0):
         result.add(d)
         x += d.width + spacing
     return result
+
 
 def circle(cx, cy, r, revs, points_per_rev):
     points = []
@@ -40,6 +44,7 @@ def circle(cx, cy, r, revs, points_per_rev):
         y = cy + math.sin(a) * r
         points.append((x, y))
     return points
+
 
 def fill_circle(cx, cy, r1, r2, revs, points_per_rev):
     points = []
@@ -53,6 +58,7 @@ def fill_circle(cx, cy, r1, r2, revs, points_per_rev):
         points.append((x, y))
     return points
 
+
 def circles():
     x = 0
     r = 0
@@ -64,6 +70,7 @@ def circles():
         x += r
         x += 0.1
     return axi.Drawing(paths)
+
 
 def fill_circles():
     x = 0
@@ -78,8 +85,10 @@ def fill_circles():
         x += 0.1
     return axi.Drawing(paths)
 
+
 def line():
     return axi.Drawing([[(0, 0), (W, 0)]])
+
 
 def lines():
     x = 0
@@ -101,10 +110,12 @@ def lines():
     # print(len(paths))
     return axi.Drawing(paths).join_paths(100)
 
+
 def title(name):
     font = axi.Font(axi.FUTURAL, 18)
     d = font.wrap(name, W, 1.5)
     return d
+
 
 def main():
     name = 'Rapidograph 0.1mm'
@@ -131,6 +142,7 @@ def main():
 
     d.dump('out.axi')
     d.render(bounds=axi.A3_BOUNDS).write_to_png('out.png')
+
 
 if __name__ == '__main__':
     main()

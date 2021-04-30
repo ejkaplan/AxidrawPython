@@ -5,7 +5,7 @@ import axi
 from utils import merge_paths
 
 DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-coord = tuple[float, float]
+coord = tuple[int, int]
 
 
 def reverse_direction(direction):
@@ -26,7 +26,7 @@ class Cell:
         else:
             raise ValueError("Tried to set non-adjacent cells as neighbors")
 
-    def remove_wall(self, direction: tuple[int, int]):
+    def remove_wall(self, direction: coord):
         self.walls[direction] = False
         self.neighbors[direction].walls[reverse_direction(direction)] = False
 
@@ -48,7 +48,7 @@ def make_grid(rows: int, cols: int) -> list[list[Cell]]:
     return cells
 
 
-def dfs_maze(rows: int, cols: int, p_random: float = 0) -> list[list[Cell]]:
+def make_maze(rows: int, cols: int, p_random: float = 0) -> list[list[Cell]]:
     cells = make_grid(rows, cols)
     start = random.choice(random.choice(cells))
     frontier = [start]
@@ -90,7 +90,7 @@ def make_paths(cells: list[list[Cell]]) -> list[list[coord]]:
 def main():
     rows = 40
     cols = round(rows * 11 / 8.5)
-    cells = dfs_maze(rows, cols, 0.1)
+    cells = make_maze(rows, cols, 0.1)
     paths = make_paths(cells)
     paths = merge_paths(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()

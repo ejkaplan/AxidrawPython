@@ -1,5 +1,8 @@
+import axi
+
+
 def merge_paths(paths):
-    print(f"BEFORE MERGE: {len(paths)-1} pen lifts")
+    print(f"BEFORE MERGE: {len(paths) - 1} pen lifts")
     frontier = paths.copy()
     finished = []
     while len(frontier) > 0:
@@ -22,5 +25,10 @@ def merge_paths(paths):
                 break
         if not changed:
             finished.append(curr)
-    print(f"AFTER MERGE: {len(finished)-1} pen lifts")
+    print(f"AFTER MERGE: {len(finished) - 1} pen lifts")
     return finished
+
+
+def offset_paths(paths, off_x, off_y):
+    return [[(p[0] + off_x, p[1] + off_y) for p in path] for path in paths]
+
