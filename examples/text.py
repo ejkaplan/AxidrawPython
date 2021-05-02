@@ -1,5 +1,3 @@
-
-
 import axi
 import itertools
 import string
@@ -12,6 +10,7 @@ TEXT = (
     'fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in '
     'culpa qui officia deserunt mollit anim id est laborum. '
 )
+
 
 def word_wrap(text, width, measure_func):
     result = []
@@ -36,6 +35,7 @@ def word_wrap(text, width, measure_func):
     result = [x.strip() for x in result]
     return result
 
+
 class Font(object):
     def __init__(self, font, point_size):
         self.font = font
@@ -43,10 +43,12 @@ class Font(object):
         # self.cap_height = axi.Drawing(axi.text('H', font)).height
         height = point_size / 72
         self.scale = height / self.max_height
+
     def text(self, text):
         d = axi.Drawing(axi.text(text, self.font))
         d = d.scale(self.scale)
         return d
+
     def justify_text(self, text, width):
         d = self.text(text)
         w = d.width
@@ -57,8 +59,10 @@ class Font(object):
         d = axi.Drawing(axi.text(text, self.font, extra=e))
         d = d.scale(self.scale)
         return d
+
     def measure(self, text):
         return self.text(text).size
+
     def wrap(self, text, width, line_spacing=1, align=0, justify=False):
         lines = word_wrap(text, width, self.measure)
         ds = [self.text(line) for line in lines]
@@ -80,11 +84,13 @@ class Font(object):
             y += spacing
         return result
 
+
 def main():
     font = Font(axi.FUTURAL, 14)
     d = font.wrap(TEXT, 11.5, 1.5, justify=True)
     d = d.center(12, 8.5)
     d.render(bounds=axi.V3_BOUNDS).write_to_png('out.png')
+
 
 if __name__ == '__main__':
     main()

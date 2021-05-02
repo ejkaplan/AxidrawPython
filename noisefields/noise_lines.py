@@ -1,0 +1,69 @@
+from opensimplex import OpenSimplex
+import axi
+import random
+
+from utils import map_range, merge_paths, Font, vertical_stack
+
+seed = random.getrandbits(64)
+noise = OpenSimplex(seed=seed)
+
+
+def noise_line(y, width, amp, samples, noise_scale):
+    path = []
+    for i in range(samples):
+        x = map_range(i, 0, samples, 0, width)
+        path.append((x, y + amp * noise.noise2d(noise_scale * x, y)))
+    return path
+
+
+def noise_field(lines, width, height, samples, amp, noise_scale):
+    paths = []
+    for i in range(lines):
+        y = map_range(i, 0, lines, 0, height)
+        paths.append(noise_line(y, width, amp, samples, noise_scale))
+    return paths
+
+
+def occlude(paths, lookahead=None):
+    if lookahead is None:
+        lookahead = len(paths)
+    out = []
+    for i in range(len(paths) - 1):
+        path = []
+        for j in range(len(paths[i])):
+            path_point = paths[i][j]
+            point_ok = True
+            for other in range(i + 1, min(lookahead + i + 1, len(paths))):
+                below = paths[other][j]
+                if path_point[1] > below[1]:
+                    point_ok = False
+                    break
+            if point_ok:
+                path.append(path_point)
+            else:
+                if len(path) > 1:
+                    out.append(path)
+                path = []
+        if len(path) > 1:
+            out.append(path)
+    out.append(paths[-1])
+    return out
+
+
+def main():
+    paths = noise_field(100, 12, 8.5, 1000, 0.9, 0.7)
+    paths = occlude(paths)
+    drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 0).sort_paths()
+    f = Font(axi.FUTURAL, 10)
+    text_drawing = f.text(str(seed)).scale_to_fit(11, 0.1)
+    drawing = vertical_stack([drawing, text_drawing], 0.2, False)
+    drawing = drawing.center(11, 8.5)
+    if axi.device.find_port() is None:
+        im = drawing.render()
+        im.write_to_png('out.png')
+    else:
+        axi.draw(drawing)
+
+
+if __name__ == "__main__":
+    main()

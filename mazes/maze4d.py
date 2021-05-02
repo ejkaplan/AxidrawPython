@@ -2,6 +2,7 @@ from __future__ import annotations
 import random
 import axi
 from utils import merge_paths, offset_paths
+import math
 
 coord = tuple[int, int, int, int]
 DIRECTIONS = [(-1, 0, 0, 0), (0, -1, 0, 0), (0, 0, -1, 0), (0, 0, 0, -1),
@@ -59,7 +60,12 @@ def make_grid(width, height, depth, dimensions):
     return cells
 
 
-def make_maze(width: int, height: int, depth: int, dimensions: int, p_random: float = 0.0):
+def get_bias(d, dir_bias):
+    nonzero = [i for i, e in enumerate(d) if e != 0][0]
+    return dir_bias[nonzero]
+
+
+def make_maze(width: int, height: int, depth: int, dimensions: int, p_random: float = 0.0, dir_bias=(1, 1, 1, 1)):
     cells = make_grid(width, height, depth, dimensions)
     frontier = [random.choice(list(cells.values()))]
     visited = {frontier[0]}
@@ -71,7 +77,8 @@ def make_maze(width: int, height: int, depth: int, dimensions: int, p_random: fl
         neighbor_directions = [n for n in curr.get_neighbor_directions() if curr.neighbors[n] not in visited]
         if len(neighbor_directions) == 0:
             continue
-        expansion_direction = random.choice(neighbor_directions)
+        biases = [get_bias(d, dir_bias) for d in neighbor_directions]
+        expansion_direction = random.choices(neighbor_directions, weights=biases)[0]
         curr.remove_wall(expansion_direction)
         next_cell = curr.neighbors[expansion_direction]
         visited.add(next_cell)
@@ -80,7 +87,30 @@ def make_maze(width: int, height: int, depth: int, dimensions: int, p_random: fl
     return cells
 
 
-def make_2d_slice_paths(cells, z, w, bounds):
+def bfs(cells, start):
+    visited = []
+    frontier = [start]
+    while len(frontier) > 0:
+        curr = frontier.pop(0)
+        visited.append(curr)
+        cell = cells.get(curr)
+        neighbors = [cell.neighbors[n].coords for n in cell.get_neighbor_directions() if
+                     not cell.walls[n] and cell.neighbors[n].coords not in visited + frontier]
+        frontier += neighbors
+    return visited
+
+
+def circle(x, y, r):
+    path = []
+    for i in range(100):
+        angle = math.tau * i / 100
+        path.append((x + r * math.cos(angle), y + r * math.sin(angle)))
+    return path
+
+
+def make_2d_slice_paths(cells, z, w, bounds, endpoints=None):
+    if endpoints is None:
+        endpoints = []
     paths = []
     door_margin = 1 / 8
     # Render the Maze
@@ -103,18 +133,55 @@ def make_2d_slice_paths(cells, z, w, bounds):
                 paths.append([(x + 0.3, y + 0.4), (x + 0.1, y + 0.5), (x + 0.3, y + 0.6)])  # left arrow
             if not cell.walls[(0, 0, 0, 1)]:
                 paths.append([(x + 0.7, y + 0.4), (x + 0.9, y + 0.5), (x + 0.7, y + 0.6)])  # right arrow
+            if (x, y, z, w) in endpoints:
+                paths.append(circle(x + 0.5, y + 0.5, 0.1))
     # Render the two missing walls
     paths.append([(bounds[0], 0), (bounds[0], bounds[1]), (0, bounds[1])])
     return paths
 
 
+def manhattan(start, end):
+    return sum([abs(start[i]-end[i]) for i in range(len(start))])
+
+
+def backtrack(prev, cell):
+    path = []
+    while cell is not None:
+        path.insert(0, cell)
+        cell = prev[cell]
+    return path
+
+
+def astar(cells, start, end):
+    prev = {start: None}
+    g_score = {start: 0}
+    f_score = {start: manhattan(start, end)}
+    open_set = {start}
+    while len(open_set) > 0:
+        curr = min(open_set, key=lambda x: f_score[x])
+        if curr == end:
+            return backtrack(prev, curr)
+        open_set.remove(curr)
+        cell = cells[curr]
+        for neighbor in [cell.neighbors[d].coords for d in cell.get_neighbor_directions() if not cell.walls[d]]:
+            tentative_g_score = g_score[curr] + 1
+            if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
+                prev[neighbor] = curr
+                g_score[neighbor] = tentative_g_score
+                f_score[neighbor] = tentative_g_score + manhattan(neighbor, end)
+                open_set.add(neighbor)
+
+
 def main():
-    bounds = (4, 4, 4, 4)
-    cells = make_maze(*bounds, 0.1)
+    bounds = (5, 5, 3, 3)
+    cells = make_maze(*bounds, 0.1, dir_bias=(1, 1, 1, 1))
+    end_a = bfs(cells, (0, 0, 0, 0))[-1]
+    end_b = bfs(cells, end_a)[-1]
+    print(len(astar(cells, end_a, end_b)))
     paths = []
     for floor in range(bounds[2]):
         for dimension in range(bounds[3]):
-            submaze = make_2d_slice_paths(cells, floor, dimension, bounds)
+            submaze = make_2d_slice_paths(cells, floor, dimension, bounds, endpoints=[end_a, end_b])
             submaze = offset_paths(submaze, dimension * (bounds[0] + 1), floor * (bounds[1] + 1))
             paths += submaze
     paths = merge_paths(paths)
