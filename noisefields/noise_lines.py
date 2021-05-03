@@ -51,16 +51,17 @@ def occlude(paths, lookahead=None):
 
 
 def main():
-    paths = noise_field(100, 12, 8.5, 1000, 0.9, 0.7)
+    paths = noise_field(100, 12, 8.5, 1000, 1, 0.7)
     paths = occlude(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 0).sort_paths()
+    drawing = drawing.join_paths(0.03).simplify_paths(0.002)
     f = Font(axi.FUTURAL, 10)
     text_drawing = f.text(str(seed)).scale_to_fit(11, 0.1)
     drawing = vertical_stack([drawing, text_drawing], 0.2, False)
     drawing = drawing.center(11, 8.5)
     if axi.device.find_port() is None:
         im = drawing.render()
-        im.write_to_png('out.png')
+        im.write_to_png('noise_lines.png')
     else:
         axi.draw(drawing)
 

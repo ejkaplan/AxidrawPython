@@ -258,7 +258,7 @@ def main():
     d = d.rotate_and_scale_to_fit(PAGE_WIDTH_IN, PAGE_HEIGHT_IN, step=90)
     d = d.sort_paths().join_paths(0.002).simplify_paths(0.002)
     im = d.render()
-    im.write_to_png('out.png')
+    im.write_to_png('maze.png')
     axi.draw(d)
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ def main():
     drawing = drawing.remove_paths_outside(12, 8.5)
     drawing = drawing.sort_paths()
     im = drawing.render()
-    im.write_to_png('out.png')
+    im.write_to_png('maze.png')
     axi.draw(drawing)
 
 if __name__ == '__main__':

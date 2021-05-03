@@ -89,7 +89,7 @@ def main():
     font = Font(axi.FUTURAL, 14)
     d = font.wrap(TEXT, 11.5, 1.5, justify=True)
     d = d.center(12, 8.5)
-    d.render(bounds=axi.V3_BOUNDS).write_to_png('out.png')
+    d.render(bounds=axi.V3_BOUNDS).write_to_png('maze.png')
 
 
 if __name__ == '__main__':

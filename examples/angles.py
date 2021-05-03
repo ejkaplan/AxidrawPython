@@ -20,7 +20,7 @@ def main():
     d = d.center(w, h)
     d = d.sort_paths()
     d.dump('out.axi')
-    d.render(bounds=BOUNDS).write_to_png('out.png')
+    d.render(bounds=BOUNDS).write_to_png('maze.png')
 
 
 if __name__ == '__main__':

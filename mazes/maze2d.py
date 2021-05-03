@@ -97,7 +97,7 @@ def main():
     drawing = drawing.center(11, 8.5)
     if axi.device.find_port() is None:
         im = drawing.render()
-        im.write_to_png('out.png')
+        im.write_to_png('maze.png')
     else:
         axi.draw(drawing)
 

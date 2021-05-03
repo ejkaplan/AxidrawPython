@@ -57,7 +57,7 @@ def main():
     d = axi.Drawing(paths)
     d = d.sort_paths()
     d = d.join_paths(0.001)
-    d.render().write_to_png('out.png')
+    d.render().write_to_png('maze.png')
     axi.draw(d)
 
 if __name__ == '__main__':

@@ -102,8 +102,8 @@ def bfs(cells, start):
 
 def circle(x, y, r):
     path = []
-    for i in range(100):
-        angle = math.tau * i / 100
+    for i in range(5):
+        angle = math.tau * i / 4
         path.append((x + r * math.cos(angle), y + r * math.sin(angle)))
     return path
 
@@ -141,7 +141,7 @@ def make_2d_slice_paths(cells, z, w, bounds, endpoints=None):
 
 
 def manhattan(start, end):
-    return sum([abs(start[i]-end[i]) for i in range(len(start))])
+    return sum([abs(start[i] - end[i]) for i in range(len(start))])
 
 
 def backtrack(prev, cell):
@@ -173,7 +173,7 @@ def astar(cells, start, end):
 
 
 def main():
-    bounds = (5, 5, 3, 3)
+    bounds = (3, 3, 3, 3)
     cells = make_maze(*bounds, 0.1, dir_bias=(1, 1, 1, 1))
     end_a = bfs(cells, (0, 0, 0, 0))[-1]
     end_b = bfs(cells, end_a)[-1]
@@ -184,12 +184,15 @@ def main():
             submaze = make_2d_slice_paths(cells, floor, dimension, bounds, endpoints=[end_a, end_b])
             submaze = offset_paths(submaze, dimension * (bounds[0] + 1), floor * (bounds[1] + 1))
             paths += submaze
-    paths = merge_paths(paths)
+    # paths = merge_paths(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()
+    print(len(drawing.all_paths))
+    drawing = drawing.join_paths(0.03).simplify_paths(0.02)
+    print(len(drawing.all_paths))
     drawing = drawing.center(11, 8.5)
     if axi.device.find_port() is None:
         im = drawing.render()
-        im.write_to_png('out.png')
+        im.write_to_png('out_simple.png')
     else:
         axi.draw(drawing)
 

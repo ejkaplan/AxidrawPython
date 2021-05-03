@@ -39,7 +39,7 @@ def main():
     add(0, 0, 64, paths)
     drawing = axi.Drawing(paths).rotate_and_scale_to_fit(11, 8.5, 0.5).sort_paths()
     im = drawing.render()
-    im.write_to_png('out.png')
+    im.write_to_png('maze.png')
     axi.draw(drawing)
 
 

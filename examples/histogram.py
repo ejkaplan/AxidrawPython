@@ -46,7 +46,7 @@ def main():
     d = d.join_paths(0.01)
     d = d.simplify_paths(0.001)
 
-    d.render().write_to_png('out.png')
+    d.render().write_to_png('maze.png')
     d.dump('out.axi')
 
 DATA = [
