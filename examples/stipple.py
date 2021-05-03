@@ -37,7 +37,7 @@ def main():
     d = d.simplify_paths(0.002)
     print(len(d.paths))
     print('rendering paths')
-    d.render(line_width=0.3/25.4).write_to_png('maze.png')
+    d.render(line_width=0.3/25.4).write_to_png('out.png')
     axi.draw(d)
 
 if __name__ == '__main__':

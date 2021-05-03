@@ -22,7 +22,7 @@ def main():
 
     print((d.bounds))
     d.dump('out.axi')
-    d.render(bounds=bounds, line_width=0.2/25.4).write_to_png('maze.png')
+    d.render(bounds=bounds, line_width=0.2/25.4).write_to_png('out.png')
 
 if __name__ == '__main__':
     main()

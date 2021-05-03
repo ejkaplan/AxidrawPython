@@ -148,7 +148,7 @@ def main():
     im = d.render(
         scale=109 * 1, line_width=0.3 / 25.4,
     )  # show_axi_bounds=False, use_axi_bounds=False)
-    im.write_to_png('maze.png')
+    im.write_to_png('out.png')
     # d = d.rotate_and_scale_to_fit(12, 8.5, step=90)
     d.dump('out.axi')
 

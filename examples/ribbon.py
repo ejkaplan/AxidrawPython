@@ -121,7 +121,7 @@ def main():
     d.add(label())
 
     print('rendering paths')
-    d.render(line_width=0.25/25.4).write_to_png('maze.png')
+    d.render(line_width=0.25/25.4).write_to_png('out.png')
     # axi.draw(d)
 
     print(d.bounds)

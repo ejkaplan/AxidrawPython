@@ -129,7 +129,7 @@ def main():
     points, pairs = poisson_disc(0, 0, 11, 8.5, 0.035, 32)
     path = make_path(pairs)
     drawing = axi.Drawing([path]).scale_to_fit(11, 8.5)
-    drawing.render().write_to_png('maze.png')
+    drawing.render().write_to_png('out.png')
     axi.draw(drawing)
 
 if __name__ == '__main__':

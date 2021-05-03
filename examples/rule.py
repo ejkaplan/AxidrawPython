@@ -268,7 +268,7 @@ def multiple():
     print(d.bounds)
     d.dump('out.axi')
     im = d.render(scale=109 * 1, line_width=0.3/25.4, show_axi_bounds=False)
-    im.write_to_png('maze.png')
+    im.write_to_png('out.png')
     # axi.draw(d)
 
 def main():

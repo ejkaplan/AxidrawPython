@@ -69,7 +69,7 @@ def punchcard_from_csv(csv_path):
     print('simplifying paths')
     d = d.simplify_paths(0.001)
 
-    d.render().write_to_png('maze.png')
+    d.render().write_to_png('out.png')
     axi.draw(d)
 
 if __name__ == '__main__':

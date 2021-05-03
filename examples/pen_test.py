@@ -141,7 +141,7 @@ def main():
     print((d.bounds))
 
     d.dump('out.axi')
-    d.render(bounds=axi.A3_BOUNDS).write_to_png('maze.png')
+    d.render(bounds=axi.A3_BOUNDS).write_to_png('out.png')
 
 
 if __name__ == '__main__':

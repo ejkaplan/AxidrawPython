@@ -24,7 +24,7 @@ def main():
     print('simplifying paths')
     d = d.simplify_paths(0.001)
     print('rendering paths')
-    d.render(line_width=0.25/25.4).write_to_png('maze.png')
+    d.render(line_width=0.25/25.4).write_to_png('out.png')
     d.dump('out.axi')
     # axi.draw(d)
 

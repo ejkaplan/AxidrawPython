@@ -18,7 +18,7 @@ def main():
     print(len(d.paths))
     print(d.bounds)
     d.dump('out.axi')
-    d.render(bounds=BOUNDS).write_to_png('maze.png')
+    d.render(bounds=BOUNDS).write_to_png('out.png')
 
 if __name__ == '__main__':
     main()

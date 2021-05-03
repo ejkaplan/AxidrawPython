@@ -49,7 +49,7 @@ def main():
     im = d.render(
         scale=109 * 1, line_width=0.3/25.4,
         show_axi_bounds=False, use_axi_bounds=False)
-    im.write_to_png('maze.png')
+    im.write_to_png('out.png')
     d.dump('out.axi')
 
 if __name__ == '__main__':
