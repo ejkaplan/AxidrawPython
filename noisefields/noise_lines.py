@@ -1,6 +1,7 @@
 from opensimplex import OpenSimplex
 import axi
 import random
+import axi.device
 
 from utils import map_range, merge_paths, Font, vertical_stack
 
@@ -51,6 +52,7 @@ def occlude(paths, lookahead=None):
 
 
 def main():
+    axi.device.MAX_VELOCITY = 3
     paths = noise_field(100, 12, 8.5, 1000, 1, 0.7)
     paths = occlude(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 0).sort_paths()

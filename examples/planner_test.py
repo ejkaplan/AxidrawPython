@@ -1,6 +1,7 @@
 from axi import Planner
 from math import pi, sin, cos
 
+
 def circle(cx, cy, r, n):
     points = []
     for i in range(n + 1):
@@ -9,6 +10,7 @@ def circle(cx, cy, r, n):
         y = cy + sin(a) * r
         points.append((x, y))
     return points
+
 
 def main():
     points = circle(0, 0, 100, 90)
@@ -23,6 +25,7 @@ def main():
         record = (b.p1.x, b.p1.y, b.p2.x, b.p2.y, b.a, b.t)
         print('[%s],' % ','.join(map(str, record)))
     print('];')
+
 
 if __name__ == '__main__':
     main()
