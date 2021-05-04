@@ -1,7 +1,7 @@
 from __future__ import annotations
 import random
 import axi
-from utils import merge_paths, offset_paths
+from AxidrawPython.utils import merge_paths, offset_paths
 import math
 
 coord = tuple[int, int, int, int]
