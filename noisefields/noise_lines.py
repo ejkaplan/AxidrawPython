@@ -3,7 +3,7 @@ import axi
 import random
 import axi.device
 
-from utils import map_range, merge_paths, Font, vertical_stack
+from utils import map_range, Font, vertical_stack
 
 seed = random.getrandbits(64)
 noise = OpenSimplex(seed=seed)
@@ -13,7 +13,11 @@ def noise_line(y, width, amp, samples, noise_scale):
     path = []
     for i in range(samples):
         x = map_range(i, 0, samples, 0, width)
-        path.append((x, y + amp * noise.noise2d(noise_scale * x, y)))
+        if i < samples / 2:
+            x_amp = map_range(i, 0, samples/2, 0, amp)
+        else:
+            x_amp = map_range(i, samples/2, samples, amp, 0)
+        path.append((x, y + x_amp * noise.noise2d(noise_scale * x, y)))
     return path
 
 
@@ -53,10 +57,10 @@ def occlude(paths, lookahead=None):
 
 def main():
     axi.device.MAX_VELOCITY = 3
-    paths = noise_field(100, 12, 8.5, 1000, 1, 0.7)
+    paths = noise_field(100, 12, 8.5, 1000, 1.2, 0.7)
     paths = occlude(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 0).sort_paths()
-    drawing = drawing.join_paths(0.03).simplify_paths(0.002)
+    drawing = drawing.join_paths(0.03).simplify_paths(0.001)
     f = Font(axi.FUTURAL, 10)
     text_drawing = f.text(str(seed)).scale_to_fit(11, 0.1)
     drawing = vertical_stack([drawing, text_drawing], 0.2, False)
