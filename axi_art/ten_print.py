@@ -1,6 +1,5 @@
 import axi
 import random
-from utils import merge_paths
 
 
 def tile(x, y, w, h):
@@ -24,12 +23,12 @@ def ten_print(rows, cols):
 
 def main():
     paths = ten_print(30, 40)
-    paths = merge_paths(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()
+    drawing = drawing.join_paths(0.03)
     drawing = drawing.center(11, 8.5)
     if axi.device.find_port() is None:
         im = drawing.render()
-        im.write_to_png('maze.png')
+        im.write_to_png('10print.png')
     else:
         axi.draw(drawing)
 

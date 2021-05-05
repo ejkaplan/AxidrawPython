@@ -2,30 +2,43 @@ from opensimplex import OpenSimplex
 import axi
 import random
 import axi.device
+import math
 
-from AxidrawPython.utils import map_range, Font, vertical_stack
+from axi_art.utils import map_range, Font, vertical_stack
 
 seed = random.getrandbits(64)
 noise = OpenSimplex(seed=seed)
+random.seed(seed)
 
 
-def noise_line(y, width, amp, samples, noise_scale):
+def noise_octaves(x, y, octaves, persistence):
+    total = 0
+    frequency = 1
+    amplitude = 1
+    max_value = 0
+    for i in range(octaves):
+        total += noise.noise2d(x * frequency, y * frequency) * amplitude
+        max_value += amplitude
+        amplitude *= persistence
+        frequency *= 2
+    return 2 * total / max_value
+
+
+def noise_line(y, width, amp, samples, x_noise_scale, y_noise_scale, octaves, persistence):
     path = []
     for i in range(samples):
+        theta = map_range(i, 0, samples, -math.pi, math.pi)
+        x_amp = map_range(math.cos(theta), -1, 1, 0, amp)
         x = map_range(i, 0, samples, 0, width)
-        if i < samples / 2:
-            x_amp = map_range(i, 0, samples/2, 0, amp)
-        else:
-            x_amp = map_range(i, samples/2, samples, amp, 0)
-        path.append((x, y + x_amp * noise.noise2d(noise_scale * x, y)))
+        path.append((x, y + x_amp * noise_octaves(x * x_noise_scale, y * y_noise_scale, octaves, persistence)))
     return path
 
 
-def noise_field(lines, width, height, samples, amp, noise_scale):
+def noise_field(lines, width, height, samples, amp, x_noise_scale, y_noise_scale, octaves, persistence):
     paths = []
     for i in range(lines):
         y = map_range(i, 0, lines, 0, height)
-        paths.append(noise_line(y, width, amp, samples, noise_scale))
+        paths.append(noise_line(y, width, amp, samples, x_noise_scale, y_noise_scale, octaves, persistence))
     return paths
 
 
@@ -57,7 +70,16 @@ def occlude(paths, lookahead=None):
 
 def main():
     axi.device.MAX_VELOCITY = 2
-    paths = noise_field(100, 12, 8.5, 1000, 1.2, 0.7)
+
+    amp = random.uniform(0.5, 1.5)
+    x_noise_scale = random.uniform(0.6, 1.1)
+    y_noise_scale = x_noise_scale * random.uniform(0.9, 1.1)
+    octaves = 3
+    persistence = random.uniform(0, 1)
+    print(amp, x_noise_scale, y_noise_scale, octaves, persistence)
+    paths = noise_field(lines=100, width=12, height=8.5, samples=1000, amp=amp,
+                        x_noise_scale=x_noise_scale, y_noise_scale=y_noise_scale, octaves=octaves,
+                        persistence=persistence)
     paths = occlude(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 0).sort_paths()
     drawing = drawing.join_paths(0.03).simplify_paths(0.001)

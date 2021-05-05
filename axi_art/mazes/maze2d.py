@@ -2,7 +2,7 @@ from __future__ import annotations
 import random
 import axi
 
-from utils import merge_paths
+from axi_art.utils import merge_paths
 
 DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 coord = tuple[int, int]
