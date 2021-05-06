@@ -1,7 +1,7 @@
 from __future__ import annotations
 import random
 import axi
-from AxidrawPython.utils import merge_paths, offset_paths
+from axi_art.utils import offset_paths
 import math
 
 coord = tuple[int, int, int, int]
@@ -173,7 +173,7 @@ def astar(cells, start, end):
 
 
 def main():
-    bounds = (3, 3, 3, 3)
+    bounds = (15, 15, 1, 2)
     cells = make_maze(*bounds, 0.1, dir_bias=(1, 1, 1, 1))
     end_a = bfs(cells, (0, 0, 0, 0))[-1]
     end_b = bfs(cells, end_a)[-1]
@@ -184,7 +184,6 @@ def main():
             submaze = make_2d_slice_paths(cells, floor, dimension, bounds, endpoints=[end_a, end_b])
             submaze = offset_paths(submaze, dimension * (bounds[0] + 1), floor * (bounds[1] + 1))
             paths += submaze
-    # paths = merge_paths(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()
     print(len(drawing.all_paths))
     drawing = drawing.join_paths(0.03).simplify_paths(0.02)
@@ -192,7 +191,7 @@ def main():
     drawing = drawing.center(11, 8.5)
     if axi.device.find_port() is None:
         im = drawing.render()
-        im.write_to_png('out_simple.png')
+        im.write_to_png('maze_4d.png')
     else:
         axi.draw(drawing)
 

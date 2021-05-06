@@ -71,11 +71,11 @@ def occlude(paths, lookahead=None):
 def main():
     axi.device.MAX_VELOCITY = 2
 
-    amp = random.uniform(0.5, 1.5)
-    x_noise_scale = random.uniform(0.6, 1.1)
-    y_noise_scale = x_noise_scale * random.uniform(0.9, 1.1)
-    octaves = 3
-    persistence = random.uniform(0, 1)
+    amp = random.gauss(0.75, 0.1)
+    x_noise_scale = random.gauss(0.7, 0.05)
+    y_noise_scale = random.gauss(0.7, 0.05)
+    octaves = 4
+    persistence = random.gauss(0.3, 0.1)
     print(amp, x_noise_scale, y_noise_scale, octaves, persistence)
     paths = noise_field(lines=100, width=12, height=8.5, samples=1000, amp=amp,
                         x_noise_scale=x_noise_scale, y_noise_scale=y_noise_scale, octaves=octaves,
