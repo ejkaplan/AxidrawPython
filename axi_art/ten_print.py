@@ -21,12 +21,15 @@ def ten_print(rows, cols):
     return paths
 
 
+TEST = False
+
+
 def main():
     paths = ten_print(30, 40)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()
     drawing = drawing.join_paths(0.03)
     drawing = drawing.center(11, 8.5)
-    if axi.device.find_port() is None:
+    if TEST or axi.device.find_port() is None:
         im = drawing.render()
         im.write_to_png('10print.png')
     else:

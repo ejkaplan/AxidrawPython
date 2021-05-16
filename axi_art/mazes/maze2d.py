@@ -87,6 +87,9 @@ def make_paths(cells: list[list[Cell]]) -> list[list[coord]]:
     return paths
 
 
+TEST = False
+
+
 def main():
     rows = 40
     cols = round(rows * 11 / 8.5)
@@ -95,7 +98,7 @@ def main():
     paths = merge_paths(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()
     drawing = drawing.center(11, 8.5)
-    if axi.device.find_port() is None:
+    if TEST or axi.device.find_port() is None:
         im = drawing.render()
         im.write_to_png('maze.png')
     else:

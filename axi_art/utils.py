@@ -13,30 +13,6 @@ def map_range(val, a0, a1, b0, b1):
     return b0 + p * (b1 - b0)
 
 
-def word_wrap(text, width, measure_func):
-    result = []
-    for line in text.split('\n'):
-        fields = itertools.groupby(line, lambda x: x.isspace())
-        fields = [''.join(g) for _, g in fields]
-        if len(fields) % 2 == 1:
-            fields.append('')
-        x = ''
-        for a, b in zip(fields[::2], fields[1::2]):
-            w, _ = measure_func(x + a)
-            if w > width:
-                if x == '':
-                    result.append(a)
-                    continue
-                else:
-                    result.append(x)
-                    x = ''
-            x += a + b
-        if x != '':
-            result.append(x)
-    result = [x.strip() for x in result]
-    return result
-
-
 class Font(object):
     def __init__(self, font, point_size):
         self.font = font
@@ -65,7 +41,7 @@ class Font(object):
         return self.text(text).size
 
     def wrap(self, text, width, line_spacing=1, align=0, justify=False):
-        lines = word_wrap(text, width, self.measure)
+        lines = self.word_wrap(text, width, self.measure)
         ds = [self.text(line) for line in lines]
         max_width = max(d.width for d in ds)
         if justify:
@@ -83,6 +59,30 @@ class Font(object):
                 x = max_width / 2 - d.width / 2
             result.add(d.translate(x, y))
             y += spacing
+        return result
+
+    @staticmethod
+    def word_wrap(text, width, measure_func):
+        result = []
+        for line in text.split('\n'):
+            fields = itertools.groupby(line, lambda x: x.isspace())
+            fields = [''.join(g) for _, g in fields]
+            if len(fields) % 2 == 1:
+                fields.append('')
+            x = ''
+            for a, b in zip(fields[::2], fields[1::2]):
+                w, _ = measure_func(x + a)
+                if w > width:
+                    if x == '':
+                        result.append(a)
+                        continue
+                    else:
+                        result.append(x)
+                        x = ''
+                x += a + b
+            if x != '':
+                result.append(x)
+        result = [x.strip() for x in result]
         return result
 
 

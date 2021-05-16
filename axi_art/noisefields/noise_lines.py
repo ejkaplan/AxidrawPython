@@ -68,9 +68,11 @@ def occlude(paths, lookahead=None):
     return out
 
 
+TEST = False
+
+
 def main():
     axi.device.MAX_VELOCITY = 2
-
     amp = random.gauss(0.75, 0.1)
     x_noise_scale = random.gauss(0.7, 0.05)
     y_noise_scale = random.gauss(0.7, 0.05)
@@ -87,7 +89,7 @@ def main():
     text_drawing = f.text(str(seed)).scale_to_fit(11, 0.1)
     drawing = vertical_stack([drawing, text_drawing], 0.2, False)
     drawing = drawing.scale_to_fit(11, 8.5, 0.5).center(11, 8.5).sort_paths()
-    if axi.device.find_port() is None:
+    if TEST or axi.device.find_port() is None:
         im = drawing.render()
         im.write_to_png('noise_lines.png')
     else:
