@@ -100,7 +100,7 @@ def edge_circles(samples_per_circle=128):
 
 
 def truchet_tiles(rows, cols):
-    tiles = ([corner_circles, chevrons, lines, edge_circles], [3, 0, 2, 0.5])
+    tiles = ([corner_circles, chevrons, lines, edge_circles], [70, 0, 25, 5])
     out = axi.Drawing()
     for x in range(cols):
         for y in range(rows):
@@ -116,7 +116,6 @@ TEST = False
 
 
 def main():
-    random.seed(0)
     drawing = truchet_tiles(10, 10)
     drawing = drawing.scale_to_fit(11, 8.5, 1).sort_paths()
     drawing = drawing.join_paths(0.01)
