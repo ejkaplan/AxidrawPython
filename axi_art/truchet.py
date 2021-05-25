@@ -3,7 +3,7 @@ import random
 import numpy as np
 
 
-def lines():
+def horizontal_lines():
     paths = []
     # horizontal lines
     for i in range(4):
@@ -14,6 +14,20 @@ def lines():
         x = 1 / 8 + i / 4
         paths.append([(x, 0), (x, 1 / 8)])
         paths.append([(x, 7 / 8), (x, 1)])
+    return axi.Drawing(paths)
+
+
+def diagonal_lines():
+    paths = [
+        [(0, 1 / 8), (1 / 8, 0)],
+        [(0, 3 / 8), (3 / 8, 0)],
+        [(0, 5 / 8), (5 / 8, 0)],
+        [(0, 7 / 8), (7 / 8, 0)],
+        [(1 / 8, 1), (1, 1 / 8)],
+        [(3 / 8, 1), (1, 3 / 8)],
+        [(5 / 8, 1), (1, 5 / 8)],
+        [(7 / 8, 1), (1, 7 / 8)]
+    ]
     return axi.Drawing(paths)
 
 
@@ -31,7 +45,7 @@ def chevrons():
     return axi.Drawing(paths)
 
 
-def corner_circles(samples_per_circle=128):
+def corner_circles(samples_per_circle=32):
     paths = []
     # Draw the circles centered on (0, 0)
     for i in range(4):
@@ -62,7 +76,7 @@ def corner_circles(samples_per_circle=128):
     return axi.Drawing(paths)
 
 
-def edge_circles(samples_per_circle=128):
+def edge_circles(samples_per_circle=32):
     paths = []
     # Draw the circles centered on (0, 0.5)
     for i in range(2):
@@ -100,7 +114,7 @@ def edge_circles(samples_per_circle=128):
 
 
 def truchet_tiles(rows, cols):
-    tiles = ([corner_circles, chevrons, lines, edge_circles], [70, 0, 25, 5])
+    tiles = ([corner_circles, horizontal_lines, edge_circles, chevrons, diagonal_lines], [2, 1, 0, 0, 0])
     out = axi.Drawing()
     for x in range(cols):
         for y in range(rows):
@@ -116,9 +130,8 @@ TEST = False
 
 
 def main():
-    drawing = truchet_tiles(10, 10)
-    drawing = drawing.scale_to_fit(11, 8.5, 1).sort_paths()
-    drawing = drawing.join_paths(0.01)
+    drawing = truchet_tiles(15, 15).sort_paths().join_paths(0.01)
+    drawing = drawing.scale_to_fit(11, 8.5, 1)
     drawing = drawing.center(11, 8.5)
     if TEST or axi.device.find_port() is None:
         im = drawing.render()
