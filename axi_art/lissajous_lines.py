@@ -3,19 +3,21 @@ import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.image as mpimg
 
-PAPER_WIDTH = 11
-PAPER_HEIGHT = 8.5
-PAPER_MARGIN = 1
+PAPER_WIDTH = 5.5
+PAPER_HEIGHT = 4.25
+PAPER_MARGIN = 0.5
 
 
 def lissajous(lo, hi, samples):
     while True:
         x_coef, y_coef = np.random.uniform(1, 5, 2)
+        x_off, y_off = np.random.uniform(-100, 100, 2)
         if np.abs(x_coef - y_coef) > 0.5:
             break
     w = PAPER_WIDTH - 2 * PAPER_MARGIN
     h = PAPER_HEIGHT - 2 * PAPER_MARGIN
-    return [(w * np.cos(x_coef * theta), h * np.sin(y_coef * theta)) for theta in np.linspace(lo, hi, samples)]
+    return [(w * np.cos(x_coef * theta + x_off), h * np.sin(y_coef * theta + y_off)) for theta in
+            np.linspace(lo, hi, samples)]
 
 
 def lissajous_lines(lo, hi, samples):
