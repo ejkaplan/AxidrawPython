@@ -1,7 +1,5 @@
 import axi
 import numpy as np
-from matplotlib import pyplot as plt
-import matplotlib.image as mpimg
 
 PAPER_WIDTH = 5.5
 PAPER_HEIGHT = 4.25
@@ -26,21 +24,25 @@ def lissajous_lines(lo, hi, samples):
     return axi.Drawing(paths)
 
 
+def make_drawing():
+    drawing = lissajous_lines(0, np.pi, 300).sort_paths()
+    drawing = drawing.scale_to_fit(PAPER_WIDTH, PAPER_HEIGHT, PAPER_MARGIN)
+    drawing = drawing.center(PAPER_WIDTH, PAPER_HEIGHT)
+    img = drawing.render(scale=150, margin=0.2)
+    img.write_to_png('lissajous.png')
+    return drawing
+
+
+SEED = False
+TEST = False
+
+
 def main():
-    fig, ax = plt.subplots(figsize=(PAPER_WIDTH, PAPER_HEIGHT))
-    ax.set_aspect('equal')
-    while True:
-        drawing = lissajous_lines(0, 4, 500).sort_paths()
-        drawing = drawing.scale_to_fit(PAPER_WIDTH, PAPER_HEIGHT, PAPER_MARGIN)
-        drawing = drawing.center(PAPER_WIDTH, PAPER_HEIGHT)
-        im = drawing.render()
-        im.write_to_png('lissajous.png')
-        img = mpimg.imread('lissajous.png')
-        plt.imshow(img)
-        plt.show()
-        if input("Are you satisfied with this image? (y/n) ").lower()[0] == 'y':
-            break
-    if axi.device.find_port() is not None:
+    seed = SEED if SEED else np.random.randint(2 ** 31)
+    print(f"The random seed is {seed}")
+    np.random.seed(seed)
+    drawing = make_drawing()
+    if axi.device.find_port() is not None and not TEST:
         axi.draw(drawing)
 
 
