@@ -2,8 +2,6 @@ from __future__ import annotations
 import random
 import axi
 
-from axi_art.utils import merge_paths
-
 DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 coord = tuple[int, int]
 
@@ -95,8 +93,8 @@ def main():
     cols = round(rows * 11 / 8.5)
     cells = make_maze(rows, cols, 0.1)
     paths = make_paths(cells)
-    paths = merge_paths(paths)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()
+    drawing = drawing.join_paths(0.03).simplify_paths(0.02)
     drawing = drawing.center(11, 8.5)
     if TEST or axi.device.find_port() is None:
         im = drawing.render()
