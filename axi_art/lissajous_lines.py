@@ -22,15 +22,16 @@ def lissajous(lo, hi, samples):
 
 def lissajous_lines(lo, hi, samples):
     curves = [lissajous(lo, hi, samples), lissajous(lo, hi, samples)]
-    paths = [[curves[0][i], curves[1][i]] for i in range(samples)]
+    paths = [[curves[0][i], curves[1][i]] for i in range(samples)] * 2
     return axi.Drawing(paths)
 
 
 def main():
     fig, ax = plt.subplots(figsize=(PAPER_WIDTH, PAPER_HEIGHT))
     ax.set_aspect('equal')
+    axi.device.MAX_VELOCITY = 3
     while True:
-        drawing = lissajous_lines(0, 4, 500).sort_paths()
+        drawing = lissajous_lines(0, 4, 300).sort_paths().join_paths(0.01)
         drawing = drawing.scale_to_fit(PAPER_WIDTH, PAPER_HEIGHT, PAPER_MARGIN)
         drawing = drawing.center(PAPER_WIDTH, PAPER_HEIGHT)
         im = drawing.render()

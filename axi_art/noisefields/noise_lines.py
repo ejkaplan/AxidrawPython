@@ -83,12 +83,12 @@ def main():
                         x_noise_scale=x_noise_scale, y_noise_scale=y_noise_scale, octaves=octaves,
                         persistence=persistence)
     paths = occlude(paths)
-    drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 0).sort_paths()
+    drawing = axi.Drawing(paths).scale_to_fit(12, 9, 0).sort_paths()
     drawing = drawing.join_paths(0.03).simplify_paths(0.001)
     f = Font(axi.FUTURAL, 10)
     text_drawing = f.text(str(seed)).scale_to_fit(11, 0.1)
     drawing = vertical_stack([drawing, text_drawing], 0.2, False)
-    drawing = drawing.scale_to_fit(11, 8.5, 0.5).center(11, 8.5).sort_paths()
+    drawing = drawing.scale_to_fit(12, 9, 0.5).center(12, 9).sort_paths()
     if TEST or axi.device.find_port() is None:
         im = drawing.render()
         im.write_to_png('noise_lines.png')

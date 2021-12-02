@@ -52,7 +52,7 @@ def im_spiral(pixels, n_points, segment_length, amp, channel):
 
 
 def main():
-    axi.device.MAX_VELOCITY = 2
+    axi.device.MAX_VELOCITY = 1.5
     url = "https://mykindofmeeple.com/wp-content/uploads/2019/01/many-meeples-1602-27042020.jpg"
     img = Image.open(requests.get(url, stream=True).raw).convert('CMYK')
     pixels = np.asarray(img)
