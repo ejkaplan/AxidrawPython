@@ -176,8 +176,8 @@ TEST = False
 
 
 def main():
-    bounds = (5, 5, 2, 4)
-    cells = make_maze(*bounds, 0.1, dir_bias=(3, 3, 1, 1))
+    bounds = (5, 5, 3, 3)
+    cells = make_maze(*bounds, p_random=0.1, dir_bias=(500, 500, 1, 1))
     end_a = bfs(cells, (0, 0, 0, 0))[-1]
     end_b = bfs(cells, end_a)[-1]
     print(f"The solution_path travels through {len(astar(cells, end_a, end_b))} cells.")
