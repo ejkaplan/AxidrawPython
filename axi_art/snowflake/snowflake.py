@@ -86,7 +86,7 @@ def snowflake(n_points, attach_radius, outer_radius) -> Drawing:
 
 def main():
     axi.device.MAX_VELOCITY = 2
-    drawing = snowflake(200, 1, 100000)
+    drawing = snowflake(2000, 1, 100000)
     drawing = drawing.scale_to_fit(11, 8.5, 1).sort_paths()
     drawing = drawing.join_paths(0.001)
     drawing = drawing.center(11, 8.5)

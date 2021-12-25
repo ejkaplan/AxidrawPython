@@ -176,8 +176,8 @@ TEST = False
 
 
 def main():
-    bounds = (5, 5, 3, 3)
-    cells = make_maze(*bounds, p_random=0.1, dir_bias=(500, 500, 1, 1))
+    bounds = (5, 5, 5, 5)
+    cells = make_maze(*bounds, p_random=0.1, dir_bias=(1, 1, 1, 1))
     end_a = bfs(cells, (0, 0, 0, 0))[-1]
     end_b = bfs(cells, end_a)[-1]
     print(f"The solution_path travels through {len(astar(cells, end_a, end_b))} cells.")
@@ -188,7 +188,7 @@ def main():
             submaze = offset_paths(submaze, dimension * (bounds[0] + 1), floor * (bounds[1] + 1))
             paths += submaze
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()
-    drawing = drawing.join_paths(0.03).simplify_paths(0.02)
+    # drawing = drawing.join_paths(0.03).simplify_paths(0.02)
     drawing = drawing.center(11, 8.5)
     if TEST or axi.device.find_port() is None:
         im = drawing.render()
