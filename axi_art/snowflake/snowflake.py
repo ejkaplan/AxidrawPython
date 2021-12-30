@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import axi
 import numpy as np
-from axi import Drawing
+from axi import Drawing, Font
 from scipy.spatial import KDTree
 from tqdm import tqdm
 
-TEST = False
+import winsound
+
 path_list = list[list[tuple[float, float]]]
 
 
@@ -53,13 +55,11 @@ class DLA:
         return dd[0], self.particles[ii[0]]
 
 
-def snowflake(n_points, attach_radius, outer_radius) -> Drawing:
+def snowflake(n_points: int, attach_radius: float, outer_radius: float, symmetry: int) -> Drawing:
     dla = DLA()
     for _ in tqdm(range(n_points), ncols=100):
-        theta = np.random.normal(0, scale=0.25)
-        if theta < 0:
-            theta *= -1
-        theta += np.pi/6
+        theta = abs(np.random.normal(0, scale=0.25))
+        theta += np.pi / symmetry
         reverse_theta = (theta + np.pi) % (2 * np.pi)
         particle = Particle(outer_radius * np.array([np.cos(theta), np.sin(theta)]),
                             reverse_theta)
@@ -67,7 +67,7 @@ def snowflake(n_points, attach_radius, outer_radius) -> Drawing:
         if dist <= attach_radius:
             continue
         while True:
-            particle.update(max(0.5*attach_radius, dist/10))
+            particle.update(max(0.5 * attach_radius, dist / 10))
             dist, neighbor = dla.distance(particle)
             if dist <= attach_radius:
                 neighbor.children.append(particle)
@@ -79,23 +79,47 @@ def snowflake(n_points, attach_radius, outer_radius) -> Drawing:
     wedge_drawing = axi.Drawing(paths)
     wedge_drawing.add(wedge_drawing.scale(1, -1))
     drawing = Drawing()
-    for i in range(6):
-        drawing.add(wedge_drawing.rotate(i * 360 / 6))
+    for i in range(symmetry):
+        drawing.add(wedge_drawing.rotate(i * 360 / symmetry))
     return drawing
 
 
-def main():
-    axi.device.MAX_VELOCITY = 2
-    drawing = snowflake(200, 1, 100000)
-    drawing = drawing.scale_to_fit(11, 8.5, 1).sort_paths()
-    drawing = drawing.join_paths(0.001)
-    drawing = drawing.center(11, 8.5)
+def notify():
+    winsound.Beep(523, 500)
+    winsound.Beep(659, 500)
+    winsound.Beep(784, 500)
 
-    if TEST or axi.device.find_port() is None:
-        im = drawing.render()
-        im.write_to_png('snowflake_preview.png')
-    else:
-        axi.draw(drawing)
+
+TEST = False
+WIDTH = 7
+HEIGHT = 5
+MARGIN = 0.5
+N_POINTS = 150
+
+
+def main():
+    n_drawings = int(input("How many drawings would you like? "))
+    for i in range(n_drawings):
+        print(f"Generating drawing {i+1} of {n_drawings}.")
+        seed = np.random.randint(0, 2 ** 31)
+        np.random.seed(seed)
+        axi.device.MAX_VELOCITY = 2
+        drawing = snowflake(N_POINTS, 1, 100000, 6)
+        drawing = drawing.scale_to_fit(WIDTH, HEIGHT, MARGIN).sort_paths()
+        drawing = drawing.join_paths(0.001)
+        f = Font(axi.FUTURAL, 10)
+        text_drawing = f.text(f'{seed:0>10}-{N_POINTS}').translate(0.5, HEIGHT - 0.5)
+        drawing = drawing.center(WIDTH, HEIGHT)
+        drawing.add(text_drawing)
+
+        notify()
+        input("Press enter when you're ready to draw!")
+        if TEST or axi.device.find_port() is None:
+            im = drawing.render(bounds=(0, 0, WIDTH, HEIGHT))
+            im.write_to_png('snowflake_preview.png')
+            im.finish()
+        else:
+            axi.draw(drawing)
 
 
 if __name__ == '__main__':
