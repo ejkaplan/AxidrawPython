@@ -80,7 +80,7 @@ def snowflake(n_points: int, attach_radius: float, outer_radius: float, symmetry
     wedge_drawing.add(wedge_drawing.scale(1, -1))
     drawing = Drawing()
     for i in range(symmetry):
-        drawing.add(wedge_drawing.rotate(i * 360 / symmetry))
+        drawing.add(wedge_drawing.rotate(i * 2 * np.pi / symmetry))
     return drawing
 
 
@@ -98,28 +98,29 @@ N_POINTS = 150
 
 
 def main():
+    axi.device.MAX_VELOCITY = 2
     n_drawings = int(input("How many drawings would you like? "))
     for i in range(n_drawings):
         print(f"Generating drawing {i+1} of {n_drawings}.")
         seed = np.random.randint(0, 2 ** 31)
         np.random.seed(seed)
         axi.device.MAX_VELOCITY = 2
-        drawing = snowflake(N_POINTS, 1, 100000, 6)
-        drawing = drawing.scale_to_fit(WIDTH, HEIGHT, MARGIN).sort_paths()
-        drawing = drawing.join_paths(0.001)
+        layers = [snowflake(250, 1.5, 10000, 6),
+                  snowflake(350, 1, 10000, 6).rotate(np.pi/6)]
+        layers = Drawing.multi_scale_to_fit(layers, WIDTH, HEIGHT, 0.5)
+        layers = [layer.sort_paths().join_paths(0.001) for layer in layers]
         f = Font(axi.FUTURAL, 10)
         text_drawing = f.text(f'{seed:0>10}-{N_POINTS}').translate(0.5, HEIGHT - 0.5)
-        drawing = drawing.center(WIDTH, HEIGHT)
-        drawing.add(text_drawing)
+        layers[0].add(text_drawing)
 
-        notify()
+        # notify()
         input("Press enter when you're ready to draw!")
         if TEST or axi.device.find_port() is None:
-            im = drawing.render(bounds=(0, 0, WIDTH, HEIGHT))
+            im = Drawing.render_layers(layers, [(1, 0, 0), (0, 0, 1)], bounds=(0, 0, WIDTH, HEIGHT))
             im.write_to_png('snowflake_preview.png')
             im.finish()
         else:
-            axi.draw(drawing)
+            axi.draw_layers(layers)
 
 
 if __name__ == '__main__':
