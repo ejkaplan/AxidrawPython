@@ -151,14 +151,14 @@ def make_grid(width: int, height: int, size_dict: dict[int, int]):
 TEST = True
 WIDTH = 11
 HEIGHT = 8.5
-ROWS = 50
+ROWS = 30
 
 
 def main():
     grid = make_grid(ROWS, round(ROWS * HEIGHT / WIDTH), {4: 1000, 3: 1000, 2: 1000})
     layers = grid.render(0.85)
     layers = Drawing.multi_scale_to_fit(list(layers), WIDTH, HEIGHT, padding=0.5)
-    layers = [layer.sort_paths() for layer in layers]
+    layers = [layer.join_paths(0.05).sort_paths() for layer in layers]
     if TEST or axi.device.find_port() is None:
         im = Drawing.render_layers(layers, bounds=(0, 0, WIDTH, HEIGHT))
         im.write_to_png('truchet.png')
