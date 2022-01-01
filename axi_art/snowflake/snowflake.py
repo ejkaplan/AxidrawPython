@@ -6,6 +6,7 @@ import axi
 import numpy as np
 from axi import Drawing, Font
 from scipy.spatial import KDTree
+from shapely.geometry import MultiLineString
 from tqdm import tqdm
 
 import winsound
@@ -55,10 +56,10 @@ class DLA:
         return dd[0], self.particles[ii[0]]
 
 
-def snowflake(n_points: int, attach_radius: float, outer_radius: float, symmetry: int) -> Drawing:
+def snowflake(n_points: int, attach_radius: float, outer_radius: float, symmetry: int, sigma: float) -> Drawing:
     dla = DLA()
     for _ in tqdm(range(n_points), ncols=100):
-        theta = abs(np.random.normal(0, scale=0.25))
+        theta = abs(np.random.normal(0, scale=sigma))
         theta += np.pi / symmetry
         reverse_theta = (theta + np.pi) % (2 * np.pi)
         particle = Particle(outer_radius * np.array([np.cos(theta), np.sin(theta)]),
@@ -84,6 +85,13 @@ def snowflake(n_points: int, attach_radius: float, outer_radius: float, symmetry
     return drawing
 
 
+def overlay(top: Drawing, bottom: Drawing) -> Drawing:
+    inflated_top = MultiLineString(top.paths).buffer(1.0)
+    bottom_diffed = MultiLineString(bottom.paths).difference(inflated_top)
+    bottom_coords = [list(line.coords) for line in bottom_diffed]
+    return Drawing(bottom_coords)
+
+
 def notify():
     winsound.Beep(523, 500)
     winsound.Beep(659, 500)
@@ -105,8 +113,11 @@ def main():
         seed = np.random.randint(0, 2 ** 31)
         np.random.seed(seed)
         axi.device.MAX_VELOCITY = 2
-        layers = [snowflake(250, 1.5, 10000, 6),
-                  snowflake(350, 1, 10000, 6).rotate(np.pi/6)]
+        small_flake = snowflake(120, 1.5, 10000, 6, 0.2).rotate(np.pi/6)
+        big_flake = snowflake(140, 1.5, 10000, 6, 0.18)
+        small_flake = overlay(big_flake, small_flake)
+        layers = [small_flake,
+                  big_flake]
         layers = Drawing.multi_scale_to_fit(layers, WIDTH, HEIGHT, 0.5)
         layers = [layer.sort_paths().join_paths(0.001) for layer in layers]
         f = Font(axi.FUTURAL, 10)
@@ -116,7 +127,7 @@ def main():
         # notify()
         input("Press enter when you're ready to draw!")
         if TEST or axi.device.find_port() is None:
-            im = Drawing.render_layers(layers, [(1, 0, 0), (0, 0, 1)], bounds=(0, 0, WIDTH, HEIGHT))
+            im = Drawing.render_layers(layers, bounds=(0, 0, WIDTH, HEIGHT))
             im.write_to_png('snowflake_preview.png')
             im.finish()
         else:

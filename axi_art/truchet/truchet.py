@@ -114,13 +114,13 @@ def edge_circles(samples_per_circle=32):
 
 
 def truchet_tiles(rows, cols):
-    tiles = ([corner_circles, horizontal_lines, edge_circles, chevrons, diagonal_lines], [2, 1, 0, 0, 0])
+    tiles = ([corner_circles, horizontal_lines, edge_circles, chevrons, diagonal_lines], [1, 0, 0, 0, 0])
     out = axi.Drawing()
     for x in range(cols):
         for y in range(rows):
             tile = random.choices(tiles[0], weights=tiles[1])[0]()
             tile = tile.translate(-0.5, -0.5)
-            tile = tile.rotate(random.choice([0, 0.25, 0.5, 0.75]) * 360)
+            tile = tile.rotate(random.choice([0, 0.25, 0.5, 0.75]) * 2 * np.pi)
             tile = tile.translate(x, y)
             out.add(tile)
     return out
@@ -130,11 +130,11 @@ TEST = False
 
 
 def main():
-    drawing = truchet_tiles(15, 15).sort_paths().join_paths(0.01)
-    drawing = drawing.scale_to_fit(11, 8.5, 1)
+    drawing = truchet_tiles(15, 20).sort_paths().join_paths(0.01)
+    drawing = drawing.scale_to_fit(11, 8.5, 0.5)
     drawing = drawing.center(11, 8.5)
     if TEST or axi.device.find_port() is None:
-        im = drawing.render()
+        im = drawing.render(bounds=(0, 0, 11, 8.5))
         im.write_to_png('truchet.png')
     else:
         axi.draw(drawing)
