@@ -45,20 +45,26 @@ class Grid:
         self._boxes.append(Box(coord[0], coord[1], size))
         return True
 
-    def render(self) -> Drawing:
+    def render(self, p_turn: float) -> tuple[Drawing, Drawing]:
         out = Drawing()
+        highlights = Drawing()
         for box in self.boxes:
-            if np.random.random() < 0.2:
+            if np.random.random() < p_turn:
                 tile = truchet_corner_circles(box.size, 2 * box.size)
+                highlight = truchet_corner_circle_highlights(box.size, 2*box.size)
             else:
                 tile = truchet_crossed_lines(box.size, 2 * box.size)
+                highlight = truchet_crossed_lines_highlights(box.size, 2*box.size)
             tile = tile.translate(-box.size / 2, -box.size / 2)
-            tile = tile.rotate(np.random.choice([0, np.pi / 2, np.pi, 3 * np.pi / 2]))
+            angle = np.random.choice([0, np.pi / 2, np.pi, 3 * np.pi / 2])
+            tile = tile.rotate(angle)
             tile = tile.translate(box.c + box.size / 2, box.r + box.size / 2)
             out.add(tile)
-            # out.add(Drawing([[(box.c, box.r), (box.c + box.size, box.r),
-            #                   (box.c + box.size, box.r + box.size), (box.c + box.size, box.r)]]))
-        return out
+            highlight = highlight.translate(-box.size / 2, -box.size / 2)
+            highlight = highlight.rotate(angle)
+            highlight = highlight.translate(box.c + box.size / 2, box.r + box.size / 2)
+            highlights.add(highlight)
+        return out, highlights
 
 
 def arc(x: float, y: float, r: float, start_angle=0, end_angle=2 * np.pi) -> Path:
@@ -70,6 +76,22 @@ def truchet_corner_circles(size: float, n_circles: int) -> Drawing:
     r = np.linspace(size / (n_circles * 2), size - size / (n_circles * 2), n_circles)
     circle_mask = Polygon(arc(0, 0, size - size / (n_circles * 2)))
     for i in range(n_circles):
+        paths.append(arc(0, 0, r[i], 0, np.pi / 2))
+        under_arc = arc(size, size, r[i], np.pi, 3 * np.pi / 2)
+        shapely_under_arc = LineString(under_arc)
+        diffed = shapely_under_arc.difference(circle_mask)
+        if isinstance(diffed, LineString):
+            paths.append(diffed.coords)
+        elif isinstance(diffed, MultiLineString):
+            paths.extend([line.coords for line in diffed])
+    return Drawing(paths)
+
+
+def truchet_corner_circle_highlights(size: float, n_circles: int) -> Drawing:
+    paths = []
+    r = np.linspace(size / n_circles, size, n_circles)
+    circle_mask = Polygon(arc(0, 0, size - size / (n_circles * 2)))
+    for i in range(0, n_circles-1, 2):
         paths.append(arc(0, 0, r[i], 0, np.pi / 2))
         under_arc = arc(size, size, r[i], np.pi, 3 * np.pi / 2)
         shapely_under_arc = LineString(under_arc)
@@ -99,6 +121,24 @@ def truchet_crossed_lines(size: float, n_lines: int) -> Drawing:
     return Drawing(paths)
 
 
+def truchet_crossed_lines_highlights(size: float, n_lines: int) -> Drawing:
+    paths = []
+    positions = np.linspace(size / n_lines, size, n_lines)
+    horizontal_rect_mask = Polygon([(0, size / (n_lines * 2)),
+                                    (size, size / (n_lines * 2)),
+                                    (size, size - size / (n_lines * 2)),
+                                    (0, size - size / (n_lines * 2))])
+    for i in range(0, n_lines-1, 2):
+        paths.append([(0, positions[i]), (size, positions[i])])
+        line_to_cut = LineString([(positions[i], 0), (positions[i], size)])
+        diffed = line_to_cut.difference(horizontal_rect_mask)
+        if isinstance(diffed, LineString):
+            paths.append(diffed.coords)
+        elif isinstance(diffed, MultiLineString):
+            paths.extend([line.coords for line in diffed])
+    return Drawing(paths)
+
+
 def make_grid(width: int, height: int, size_dict: dict[int, int]):
     grid = Grid(width, height)
     for size in sorted(size_dict.keys(), reverse=True):
@@ -112,15 +152,14 @@ TEST = True
 
 
 def main():
-    grid = make_grid(60, 46, {3: 100, 2: 100})
-    drawing = grid.render()
-    drawing = drawing.scale_to_fit(11, 8.5, 0.5)
-    drawing = drawing.center(11, 8.5)
+    grid = make_grid(40, 30, {4: 1000, 3: 1000, 2: 1000})
+    layers = grid.render(0.85)
+    layers = Drawing.multi_scale_to_fit(list(layers), 11, 8.5, padding=0.5)
     if TEST or axi.device.find_port() is None:
-        im = drawing.render(bounds=(0, 0, 11, 8.5))
+        im = Drawing.render_layers(layers, bounds=(0, 0, 11, 8.5))
         im.write_to_png('truchet.png')
     else:
-        axi.draw(drawing)
+        axi.draw_layers(layers)
 
 
 if __name__ == '__main__':
