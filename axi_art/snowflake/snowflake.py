@@ -107,6 +107,7 @@ N_POINTS = 150
 
 def main():
     axi.device.MAX_VELOCITY = 2
+    axi.device.PEN_UP_POSITION += 5
     n_drawings = int(input("How many drawings would you like? "))
     for i in range(n_drawings):
         print(f"Generating drawing {i+1} of {n_drawings}.")
@@ -119,11 +120,10 @@ def main():
         layers = [small_flake,
                   big_flake]
         layers = Drawing.multi_scale_to_fit(layers, WIDTH, HEIGHT, 0.5)
-        layers = [layer.sort_paths().join_paths(0.001) for layer in layers]
+        layers = [layer.join_paths(0.01).sort_paths() for layer in layers]
         f = Font(axi.FUTURAL, 10)
         text_drawing = f.text(f'{seed:0>10}-{N_POINTS}').translate(0.5, HEIGHT - 0.5)
         layers[0].add(text_drawing)
-
         # notify()
         input("Press enter when you're ready to draw!")
         if TEST or axi.device.find_port() is None:
