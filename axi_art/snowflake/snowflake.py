@@ -58,7 +58,7 @@ class DLA:
 
 def snowflake(n_points: int, attach_radius: float, outer_radius: float, symmetry: int, sigma: float) -> Drawing:
     dla = DLA()
-    for _ in tqdm(range(n_points), ncols=100):
+    for _ in range(n_points):
         theta = abs(np.random.normal(0, scale=sigma))
         theta += np.pi / symmetry
         reverse_theta = (theta + np.pi) % (2 * np.pi)
