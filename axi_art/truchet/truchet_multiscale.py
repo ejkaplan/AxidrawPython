@@ -155,7 +155,6 @@ ROWS = 30
 
 
 def main():
-    axi.device.PEN_UP_POSITION = 65
     grid = make_grid(ROWS, round(ROWS * HEIGHT / WIDTH), {4: 1000, 3: 1000, 2: 1000})
     layers = grid.render(0.85)
     layers = Drawing.multi_scale_to_fit(list(layers), WIDTH, HEIGHT, padding=0.5)
