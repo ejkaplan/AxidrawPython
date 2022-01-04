@@ -2,6 +2,7 @@ from random import choice
 from typing import NamedTuple
 
 import axi
+import click
 import numpy as np
 from axi import Drawing
 from axi.paths import Path
@@ -139,28 +140,31 @@ def truchet_crossed_lines_highlights(size: float, n_lines: int) -> Drawing:
     return Drawing(paths)
 
 
-def make_grid(width: int, height: int, size_dict: dict[int, int]):
+def make_grid(width: int, height: int, max_block_size: int):
     grid = Grid(width, height)
-    for size in sorted(size_dict.keys(), reverse=True):
-        for _ in range(size_dict[size]):
-            if not grid.randomly_merge(size):
-                break
+    available_sizes = list(range(2, max_block_size+1))
+    while len(available_sizes) > 0:
+        size = np.random.choice(available_sizes)
+        if not grid.randomly_merge(size):
+            available_sizes.remove(size)
     return grid
 
 
-TEST = False
-WIDTH = 7.874
-HEIGHT = 7.874
-ROWS = 30
-
-
-def main():
-    grid = make_grid(ROWS, round(ROWS * HEIGHT / WIDTH), {4: 1000, 3: 1000, 2: 1000})
-    layers = grid.render(0.85)
-    layers = Drawing.multi_scale_to_fit(list(layers), WIDTH, HEIGHT, padding=0.5)
+@click.command()
+@click.option('-t', '--test', is_flag=True)
+@click.option('-w', '--width', prompt=True, type=float)
+@click.option('-h', '--height', prompt=True, type=float)
+@click.option('-m', '--margin', prompt=True, type=float)
+@click.option('-r', '--rows', prompt=True, type=int)
+@click.option('-b', '--max-block-size', prompt=True, type=int)
+@click.option('-p', '--prob_turn', prompt=True, type=float)
+def main(test: bool, width: float, height: float, margin: float, rows: int, max_block_size: int, prob_turn: float):
+    grid = make_grid(rows, round(rows * height / width), max_block_size)
+    layers = grid.render(prob_turn)
+    layers = Drawing.multi_scale_to_fit(list(layers), width, height, padding=margin)
     layers = [layer.join_paths(0.05).sort_paths() for layer in layers]
-    if TEST or axi.device.find_port() is None:
-        im = Drawing.render_layers(layers, bounds=(0, 0, WIDTH, HEIGHT))
+    if test or axi.device.find_port() is None:
+        im = Drawing.render_layers(layers, bounds=(0, 0, width, height))
         im.write_to_png('truchet.png')
     else:
         axi.draw_layers(layers)
