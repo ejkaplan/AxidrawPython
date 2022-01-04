@@ -148,14 +148,15 @@ def make_grid(width: int, height: int, size_dict: dict[int, int]):
     return grid
 
 
-TEST = True
-WIDTH = 11
-HEIGHT = 8.5
-ROWS = 40
+TEST = False
+WIDTH = 7.874
+HEIGHT = 7.874
+ROWS = 30
 
 
 def main():
-    grid = make_grid(ROWS, round(ROWS * HEIGHT / WIDTH), {8: 3, 4: 1000, 2: 1000})
+    axi.device.PEN_UP_POSITION = 65
+    grid = make_grid(ROWS, round(ROWS * HEIGHT / WIDTH), {4: 1000, 3: 1000, 2: 1000})
     layers = grid.render(0.85)
     layers = Drawing.multi_scale_to_fit(list(layers), WIDTH, HEIGHT, padding=0.5)
     layers = [layer.join_paths(0.05).sort_paths() for layer in layers]
