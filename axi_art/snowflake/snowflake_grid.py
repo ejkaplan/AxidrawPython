@@ -19,8 +19,8 @@ from axi_art.snowflake.snowflake import snowflake, overlay
 @click.option('-pb', '--points_big', prompt=True, type=int, default=30)
 @click.option('-ts', '--theta_small', prompt=True, type=float, default=0.2)
 @click.option('-tb', '--theta_big', prompt=True, type=float, default=0.18)
-def flake_grid(test: bool, width: float, height: float, margin: float, rows: int, cols: int, colors: int, 
-               points_small: int, points_big: int, theta_small: float, theta_big: float):
+def main(test: bool, width: float, height: float, margin: float, rows: int, cols: int, colors: int,
+         points_small: int, points_big: int, theta_small: float, theta_big: float):
     layers = [Drawing() for _ in range(colors)]
     axi.device.MAX_VELOCITY = 2
     flake_size = (width / cols, height / rows)
@@ -50,4 +50,4 @@ def flake_grid(test: bool, width: float, height: float, margin: float, rows: int
 
 
 if __name__ == '__main__':
-    flake_grid()
+    main()
