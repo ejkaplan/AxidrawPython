@@ -1,8 +1,12 @@
 from __future__ import annotations
-import random
-import axi
-from axi_art.utils import offset_paths
+
 import math
+import random
+
+import axi
+import click
+
+from axi_art.utils import offset_paths
 
 coord = tuple[int, int, int, int]
 DIRECTIONS = [(-1, 0, 0, 0), (0, -1, 0, 0), (0, 0, -1, 0), (0, 0, 0, -1),
@@ -172,26 +176,37 @@ def astar(cells, start, end):
                 open_set.add(neighbor)
 
 
-TEST = False
-
-
-def main():
-    bounds = (5, 5, 5, 5)
-    cells = make_maze(*bounds, p_random=0.1, dir_bias=(1, 1, 1, 1))
+@click.command()
+@click.option('-t', '--test', is_flag=True)
+@click.option('-w', '--width', prompt=True, type=float)
+@click.option('-h', '--height', prompt=True, type=float)
+@click.option('-m', '--margin', prompt=True, type=float)
+@click.option('-r', '--rows', prompt=True, type=int)
+@click.option('-c', '--cols', prompt=True, type=int)
+@click.option('-mr', '--meta-rows', prompt=True, type=int)
+@click.option('-mc', '--meta-cols', prompt=True, type=int)
+@click.option('-rb', '--row-bias', prompt=True, type=float, default=1)
+@click.option('-cb', '--col-bias', prompt=True, type=float, default=1)
+@click.option('-mrb', '--meta-row-bias', prompt=True, type=float, default=1)
+@click.option('-mcb', '--meta-col-bias', prompt=True, type=float, default=1)
+@click.option('-r', '--random_pickup_prob', prompt=True, type=float, default=0)
+def main(test: bool, width: float, height: float, margin: float,
+         rows: int, cols: int, meta_rows: int, meta_cols: int,
+         row_bias: float, col_bias: float, meta_row_bias: float, meta_col_bias: float,
+         random_pickup_prob: float):
+    bounds = (rows, cols, meta_rows, meta_cols)
+    cells = make_maze(*bounds, p_random=random_pickup_prob, dir_bias=(row_bias, col_bias, meta_row_bias, meta_col_bias))
     end_a = bfs(cells, (0, 0, 0, 0))[-1]
     end_b = bfs(cells, end_a)[-1]
-    print(f"The solution_path travels through {len(astar(cells, end_a, end_b))} cells.")
     paths = []
     for floor in range(bounds[2]):
         for dimension in range(bounds[3]):
             submaze = make_2d_slice_paths(cells, floor, dimension, bounds, endpoints=[end_a, end_b])
             submaze = offset_paths(submaze, dimension * (bounds[0] + 1), floor * (bounds[1] + 1))
             paths += submaze
-    drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 1).sort_paths()
-    # drawing = drawing.join_paths(0.03).simplify_paths(0.02)
-    drawing = drawing.center(11, 8.5)
-    if TEST or axi.device.find_port() is None:
-        im = drawing.render()
+    drawing = axi.Drawing(paths).scale_to_fit(width, height, margin).join_paths(0.03).sort_paths().center(width, height)
+    if test or axi.device.find_port() is None:
+        im = drawing.render(bounds=(0, 0, width, height))
         im.write_to_png('maze_4d.png')
     else:
         axi.draw(drawing)
