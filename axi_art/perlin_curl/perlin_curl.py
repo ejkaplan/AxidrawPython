@@ -1,6 +1,7 @@
 from typing import Tuple, Union, Optional
 
 import axi
+import click
 import numpy as np
 from axi import Drawing
 from perlin_numpy import generate_perlin_noise_2d
@@ -97,14 +98,32 @@ def assign_to_layers(paths: MultiLineString, n_layers: int, width: float, height
     return [Drawing(layer) for layer in layers]
 
 
-def main(test: bool):
-    curl = curl_noise((200, 200), (4, 4))
-    lines = line_strings_through_field(curl, 200, 4)
-    layers = assign_to_layers(lines, 3, 200, 200, 2)
-    layers = Drawing.multi_scale_to_fit(layers, 10, 10, 0.5)
+@click.command()
+@click.option('-t', '--test', is_flag=True)
+@click.option('-w', '--width', prompt=True, type=float)
+@click.option('-h', '--height', prompt=True, type=float)
+@click.option('-m', '--margin', prompt=True, type=float)
+@click.option('-sx', '--grid-shape-x', prompt=True, type=int, default=200)
+@click.option('-sy', '--grid-shape-y', prompt=True, type=int, default=200)
+@click.option('-rx', '--grid-res-x', prompt=True, type=int, default=4)
+@click.option('-ry', '--grid-res-y', prompt=True, type=int, default=4)
+@click.option('-l', '--line-length', prompt=True, type=int, default=200)
+@click.option('-l', '--line-separation', prompt=True, type=float, default=5)
+@click.option('-cn', '--n-colors', prompt=True, type=int, default=3)
+@click.option('-cc', '--color-cohesion', prompt=True, type=float, default=1.8)
+def main(test: bool, width: float, height: float, margin: float,
+         grid_shape_x: int, grid_shape_y: int, grid_res_x: int, grid_res_y: int,
+         line_length: int, line_separation: float,
+         n_colors: int, color_cohesion: float):
+    grid_shape_x = grid_shape_x // grid_res_x * grid_res_x
+    grid_shape_y = grid_shape_y // grid_res_y * grid_res_y
+    curl = curl_noise((grid_shape_x, grid_shape_y), (grid_res_x, grid_res_y))
+    lines = line_strings_through_field(curl, line_length, line_separation)
+    layers = assign_to_layers(lines, n_colors, grid_shape_x, grid_shape_y, color_cohesion)
+    layers = Drawing.multi_scale_to_fit(layers, width, height, margin)
     layers = [layer.sort_paths() for layer in layers]
     if test or axi.device.find_port() is None:
-        im = Drawing.render_layers(layers, bounds=(0, 0, 10, 10))
+        im = Drawing.render_layers(layers, bounds=(0, 0, width, height))
         im.write_to_png('curl_preview.png')
         im.finish()
     else:
@@ -112,4 +131,4 @@ def main(test: bool):
 
 
 if __name__ == '__main__':
-    main(True)
+    main()
