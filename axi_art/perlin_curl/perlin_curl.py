@@ -60,9 +60,9 @@ def single_linestring_through_field(field: np.ndarray, line_length: int,
     points[0] = start_pos
     for i in range(1, line_length):
         prev_point = points[i - 1]
-        if not point_in_bounds(prev_point, 0, 0, *field.shape[:2]):
-            break
         next_point = prev_point + speed_mult * field[round(prev_point[0]), round(prev_point[1])]
+        if not point_in_bounds(next_point, 0, 0, *field.shape[:2]):
+            break
         if linestring_in_progress is not None and linestring_in_progress.distance(Point(next_point)) < separation_dist:
             break
         points[i] = next_point
@@ -103,18 +103,22 @@ def assign_to_layers(paths: MultiLineString, n_layers: int, width: float, height
 @click.option('-w', '--width', prompt=True, type=float)
 @click.option('-h', '--height', prompt=True, type=float)
 @click.option('-m', '--margin', prompt=True, type=float)
-@click.option('-sx', '--grid-shape-x', prompt=True, type=int, default=200)
-@click.option('-sy', '--grid-shape-y', prompt=True, type=int, default=200)
-@click.option('-rx', '--grid-res-x', prompt=True, type=int, default=4)
-@click.option('-ry', '--grid-res-y', prompt=True, type=int, default=4)
+@click.option('-sx', '--grid-dpi', prompt=True, type=int, default=25)
+@click.option('-ry', '--grid-res', prompt=True, type=int, default=4)
 @click.option('-l', '--line-length', prompt=True, type=int, default=200)
 @click.option('-l', '--line-separation', prompt=True, type=float, default=5)
 @click.option('-cn', '--n-colors', prompt=True, type=int, default=3)
-@click.option('-cc', '--color-cohesion', prompt=True, type=float, default=1.8)
+@click.option('-cc', '--color-cohesion', prompt=True, type=float, default=2)
 def main(test: bool, width: float, height: float, margin: float,
-         grid_shape_x: int, grid_shape_y: int, grid_res_x: int, grid_res_y: int,
+         grid_dpi: float, grid_res: int,
          line_length: int, line_separation: float,
          n_colors: int, color_cohesion: float):
+    grid_shape_x = round((width - 2 * margin) * grid_dpi)
+    grid_shape_y = round((height - 2 * margin) * grid_dpi)
+    if width > height:
+        grid_res_x, grid_res_y = grid_res, round(grid_shape_y * grid_res / grid_shape_x)
+    else:
+        grid_res_x, grid_res_y = round(grid_shape_x * grid_res / grid_shape_y), grid_res
     grid_shape_x = grid_shape_x // grid_res_x * grid_res_x
     grid_shape_y = grid_shape_y // grid_res_y * grid_res_y
     curl = curl_noise((grid_shape_x, grid_shape_y), (grid_res_x, grid_res_y))
