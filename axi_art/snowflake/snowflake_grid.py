@@ -33,7 +33,8 @@ def main(test: bool, width: float, height: float, margin: float, rows: int, cols
                 curr_layers = [small_flake,
                                big_flake]
                 curr_layers = Drawing.multi_scale_to_fit(curr_layers, *flake_size, max(flake_size) * 0.05)
-                curr_layers = [layer.translate(x, y).sort_paths().join_paths(0.001) for layer in curr_layers]
+                curr_layers = [layer.translate(x, y)
+                               for layer in curr_layers]
                 rand_ints = np.random.choice(colors, size=2, replace=False)
                 for i, layer in enumerate(curr_layers):
                     layers[rand_ints[i]].add(layer)
