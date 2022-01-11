@@ -1,7 +1,6 @@
-from typing import Tuple, Union, Optional
+from typing import Tuple, Union, Optional, Callable
 
 import axi
-import click
 import numpy as np
 from axi import Drawing
 from perlin_numpy import generate_perlin_noise_2d
@@ -33,6 +32,22 @@ def curl_noise(shape: Tuple[int, int], res: Tuple[int, int]) -> np.ndarray:
     dx = (noise[1:-1, 2:] - noise[1:-1, :-2]) / 2
     dy = (noise[2:, 1:-1] - noise[:-2, 1:-1]) / 2
     return np.dstack((dx, -dy))
+
+
+def blend_vector_fields(field_a: np.ndarray, field_b: np.ndarray, f_blend: Callable[[int, int], float]) -> np.ndarray:
+    """
+    Blend two vector fields into a single vector field
+    Args:
+        field_a: The first field to be blended as 2d grid of velocities
+        field_b: The second field to be blended
+        f_blend: A function mapping coordinates to percentages, where 0 is the first vector field and 1 is the second
+
+    Returns: The new vector field
+    """
+    assert field_a.shape == field_b.shape
+    assert field_a.shape[2] == 2
+    blend = np.array([[f_blend(r, c) for c in range(field_a.shape[1])] for r in range(field_a.shape[0])])[:, :, None]
+    return (1 - blend) * field_a + blend * field_b
 
 
 def grid_render_vector_field(field: np.ndarray, line_length: float) -> Drawing:
@@ -72,17 +87,23 @@ def single_linestring_through_field(field: np.ndarray, line_length: int,
 
 
 def line_strings_through_field(field: np.ndarray, line_length: int, line_separation: float) -> MultiLineString:
-    line_starts = circle_pack(field.shape[0], field.shape[1], line_separation)
+    line_starts = circle_pack(field.shape[0], field.shape[1], line_separation * 0.8)
     line_strings = None
+    consecutive_failures = 0
     for line_start in tqdm(line_starts):
         line = single_linestring_through_field(field, line_length,
                                                line_start,
                                                4, 1, line_strings)
         if line is not None:
+            consecutive_failures = 0
             if line_strings is None:
                 line_strings = MultiLineString([line])
             else:
                 line_strings = line_strings.union(line)
+        else:
+            consecutive_failures += 1
+            if consecutive_failures > 0.05 * len(line_starts):
+                break
     return line_strings
 
 
@@ -98,21 +119,8 @@ def assign_to_layers(paths: MultiLineString, n_layers: int, width: float, height
     return [Drawing(layer) for layer in layers]
 
 
-@click.command()
-@click.option('-t', '--test', is_flag=True)
-@click.option('-w', '--width', prompt=True, type=float)
-@click.option('-h', '--height', prompt=True, type=float)
-@click.option('-m', '--margin', prompt=True, type=float)
-@click.option('-sx', '--grid-dpi', prompt=True, type=int, default=25)
-@click.option('-ry', '--grid-res', prompt=True, type=int, default=4)
-@click.option('-l', '--line-length', prompt=True, type=int, default=200)
-@click.option('-l', '--line-separation', prompt=True, type=float, default=5)
-@click.option('-cn', '--n-colors', prompt=True, type=int, default=3)
-@click.option('-cc', '--color-cohesion', prompt=True, type=float, default=2)
-def main(test: bool, width: float, height: float, margin: float,
-         grid_dpi: float, grid_res: int,
-         line_length: int, line_separation: float,
-         n_colors: int, color_cohesion: float):
+def derive_grid_shape(width: float, height: float, margin: float, grid_dpi: float, grid_res: int) -> \
+        tuple[tuple[int, int], tuple[int, int]]:
     grid_shape_x = round((width - 2 * margin) * grid_dpi)
     grid_shape_y = round((height - 2 * margin) * grid_dpi)
     if width > height:
@@ -121,18 +129,13 @@ def main(test: bool, width: float, height: float, margin: float,
         grid_res_x, grid_res_y = round(grid_shape_x * grid_res / grid_shape_y), grid_res
     grid_shape_x = grid_shape_x // grid_res_x * grid_res_x
     grid_shape_y = grid_shape_y // grid_res_y * grid_res_y
-    curl = curl_noise((grid_shape_x, grid_shape_y), (grid_res_x, grid_res_y))
-    lines = line_strings_through_field(curl, line_length, line_separation)
-    layers = assign_to_layers(lines, n_colors, grid_shape_x, grid_shape_y, color_cohesion)
-    layers = Drawing.multi_scale_to_fit(layers, width, height, margin)
-    layers = [layer.sort_paths() for layer in layers]
-    if test or axi.device.find_port() is None:
-        im = Drawing.render_layers(layers, bounds=(0, 0, width, height))
-        im.write_to_png('curl_preview.png')
-        im.finish()
-    else:
-        axi.draw_layers(layers)
+    return (grid_shape_x, grid_shape_y), (grid_res_x, grid_res_y)
 
 
-if __name__ == '__main__':
-    main()
+def render_flow_field(field: np.ndarray, line_length: int, line_separation: float,
+                      n_colors: int, color_cohesion: float) -> list[Drawing]:
+    assert field.ndim == 3
+    assert field.shape[2] == 2
+    lines = line_strings_through_field(field, line_length, line_separation)
+    layers = assign_to_layers(lines, n_colors, field.shape[0], field.shape[1], color_cohesion)
+    return layers
