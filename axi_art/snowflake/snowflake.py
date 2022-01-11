@@ -86,7 +86,7 @@ def snowflake(points: int, attach_radius: float, outer_radius: float, symmetry: 
 def overlay(top: Drawing, bottom: Drawing) -> Drawing:
     inflated_top = MultiLineString(top.paths).buffer(1.0)
     bottom_diffed = MultiLineString(bottom.paths).difference(inflated_top)
-    bottom_coords = [list(line.coords) for line in bottom_diffed]
+    bottom_coords = [list(line.coords) for line in bottom_diffed.geoms]
     return Drawing(bottom_coords)
 
 

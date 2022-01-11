@@ -1,6 +1,5 @@
 from typing import Tuple, Union, Optional, Callable
 
-import axi
 import numpy as np
 from axi import Drawing
 from perlin_numpy import generate_perlin_noise_2d
@@ -111,7 +110,7 @@ def assign_to_layers(paths: MultiLineString, n_layers: int, width: float, height
                      color_cohesion: float = 1) -> list[Drawing]:
     layers = [[] for _ in range(n_layers)]
     centers = [Point([width, height] * np.random.random(2)) for _ in range(n_layers)]
-    for path in paths:
+    for path in paths.geoms:
         dists = np.array([(1 / path.distance(center)) ** color_cohesion for center in centers])
         dists /= np.sum(dists)
         layer = np.random.choice(n_layers, p=dists)
