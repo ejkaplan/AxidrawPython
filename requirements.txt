@@ -1,6 +1,6 @@
 axi~=0.1
 click~=8.0.3
-numpy~=1.21.4
+numpy~=1.22.0
 shapely~=1.8.0
 scipy~=1.7.3
 tqdm~=4.62.3
