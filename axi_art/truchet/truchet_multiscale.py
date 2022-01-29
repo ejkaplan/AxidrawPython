@@ -16,7 +16,6 @@ class Box(NamedTuple):
 
 
 class Grid:
-
     def __init__(self, width: int, height: int):
         self.grid = np.zeros((height, width))
         self._boxes = []
@@ -36,13 +35,23 @@ class Grid:
         return out + [Box(*coord, 1) for coord in zip(*singletons)]
 
     def randomly_merge(self, size: int) -> bool:
-        legal_placements = [(r, c) for r in range(self.height - size + 1) for c in range(self.width - size + 1)]
-        legal_placements = list(filter(lambda x: np.all(self.grid[x[0]:x[0] + size, x[1]:x[1] + size] == 0),
-                                       legal_placements))
+        legal_placements = [
+            (r, c)
+            for r in range(self.height - size + 1)
+            for c in range(self.width - size + 1)
+        ]
+        legal_placements = list(
+            filter(
+                lambda x: np.all(
+                    self.grid[x[0] : x[0] + size, x[1] : x[1] + size] == 0
+                ),
+                legal_placements,
+            )
+        )
         if len(legal_placements) == 0:
             return False
         coord = choice(legal_placements)
-        self.grid[coord[0]:coord[0] + size, coord[1]:coord[1] + size] = 1
+        self.grid[coord[0] : coord[0] + size, coord[1] : coord[1] + size] = 1
         self._boxes.append(Box(coord[0], coord[1], size))
         return True
 
@@ -69,7 +78,10 @@ class Grid:
 
 
 def arc(x: float, y: float, r: float, start_angle=0, end_angle=2 * np.pi) -> Path:
-    return [(x + r * np.cos(theta), y + r * np.sin(theta)) for theta in np.linspace(start_angle, end_angle, 32)]
+    return [
+        (x + r * np.cos(theta), y + r * np.sin(theta))
+        for theta in np.linspace(start_angle, end_angle, 32)
+    ]
 
 
 def truchet_corner_circles(size: float, n_circles: int) -> Drawing:
@@ -107,10 +119,14 @@ def truchet_corner_circle_highlights(size: float, n_circles: int) -> Drawing:
 def truchet_crossed_lines(size: float, n_lines: int) -> Drawing:
     paths = []
     positions = np.linspace(size / (n_lines * 2), size - size / (n_lines * 2), n_lines)
-    horizontal_rect_mask = Polygon([(0, size / (n_lines * 2)),
-                                    (size, size / (n_lines * 2)),
-                                    (size, size - size / (n_lines * 2)),
-                                    (0, size - size / (n_lines * 2))])
+    horizontal_rect_mask = Polygon(
+        [
+            (0, size / (n_lines * 2)),
+            (size, size / (n_lines * 2)),
+            (size, size - size / (n_lines * 2)),
+            (0, size - size / (n_lines * 2)),
+        ]
+    )
     for i in range(n_lines):
         paths.append([(0, positions[i]), (size, positions[i])])
         line_to_cut = LineString([(positions[i], 0), (positions[i], size)])
@@ -125,10 +141,14 @@ def truchet_crossed_lines(size: float, n_lines: int) -> Drawing:
 def truchet_crossed_lines_highlights(size: float, n_lines: int) -> Drawing:
     paths = []
     positions = np.linspace(size / n_lines, size, n_lines)
-    horizontal_rect_mask = Polygon([(0, size / (n_lines * 2)),
-                                    (size, size / (n_lines * 2)),
-                                    (size, size - size / (n_lines * 2)),
-                                    (0, size - size / (n_lines * 2))])
+    horizontal_rect_mask = Polygon(
+        [
+            (0, size / (n_lines * 2)),
+            (size, size / (n_lines * 2)),
+            (size, size - size / (n_lines * 2)),
+            (0, size - size / (n_lines * 2)),
+        ]
+    )
     for i in range(0, n_lines - 1, 2):
         paths.append([(0, positions[i]), (size, positions[i])])
         line_to_cut = LineString([(positions[i], 0), (positions[i], size)])
@@ -142,7 +162,7 @@ def truchet_crossed_lines_highlights(size: float, n_lines: int) -> Drawing:
 
 def make_grid(width: int, height: int, max_block_size: int):
     grid = Grid(width, height)
-    available_sizes = list(range(2, max_block_size+1))
+    available_sizes = list(range(2, max_block_size + 1))
     while len(available_sizes) > 0:
         size = np.random.choice(available_sizes)
         if not grid.randomly_merge(size):
@@ -151,24 +171,32 @@ def make_grid(width: int, height: int, max_block_size: int):
 
 
 @click.command()
-@click.option('-t', '--test', is_flag=True)
-@click.option('-w', '--width', prompt=True, type=float)
-@click.option('-h', '--height', prompt=True, type=float)
-@click.option('-m', '--margin', prompt=True, type=float)
-@click.option('-r', '--rows', prompt=True, type=int)
-@click.option('-b', '--max-block-size', prompt=True, type=int)
-@click.option('-p', '--prob_turn', prompt=True, type=float)
-def main(test: bool, width: float, height: float, margin: float, rows: int, max_block_size: int, prob_turn: float):
+@click.option("-t", "--test", is_flag=True)
+@click.option("-w", "--width", prompt=True, type=float)
+@click.option("-h", "--height", prompt=True, type=float)
+@click.option("-m", "--margin", prompt=True, type=float)
+@click.option("-r", "--rows", prompt=True, type=int)
+@click.option("-b", "--max-block-size", prompt=True, type=int)
+@click.option("-p", "--prob_turn", prompt=True, type=float)
+def main(
+    test: bool,
+    width: float,
+    height: float,
+    margin: float,
+    rows: int,
+    max_block_size: int,
+    prob_turn: float,
+):
     grid = make_grid(rows, round(rows * height / width), max_block_size)
     layers = grid.render(prob_turn)
     layers = Drawing.multi_scale_to_fit(list(layers), width, height, padding=margin)
     layers = [layer.join_paths(0.05).sort_paths() for layer in layers]
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(layers, bounds=(0, 0, width, height))
-        im.write_to_png('truchet.png')
+        im.write_to_png("truchet.png")
     else:
         axi.draw_layers(layers)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -9,18 +9,24 @@ from tqdm import tqdm
 
 def circle_pack(width: int, height: int, min_separation: float) -> list[np.ndarray]:
     outline = LinearRing([(0, 0), (0, width), (height, width), (height, 0)])
-    distances = np.array([[Point(x, y).distance(outline) for y in range(height)] for x in range(width)])
+    distances = np.array(
+        [[Point(x, y).distance(outline) for y in range(height)] for x in range(width)]
+    )
     centers = []
     while len(options := np.argwhere(distances > min_separation)) > 0:
         center = options[np.random.randint(options.shape[0])]
         centers.append(center)
         i, j = np.indices(distances.shape, sparse=True)
-        new_distances = np.maximum(0, np.sqrt((i - center[0]) ** 2 + (j - center[1]) ** 2))
+        new_distances = np.maximum(
+            0, np.sqrt((i - center[0]) ** 2 + (j - center[1]) ** 2)
+        )
         distances = np.minimum(distances, new_distances)
     return centers
 
 
-def point_in_bounds(point: np.ndarray, low_r: float, low_c: float, high_r: float, high_c: float) -> bool:
+def point_in_bounds(
+    point: np.ndarray, low_r: float, low_c: float, high_r: float, high_c: float
+) -> bool:
     assert point.shape == (2,)
     return low_r < round(point[0]) < high_r and low_c < round(point[1]) < high_c
 
@@ -33,7 +39,9 @@ def curl_noise(shape: Tuple[int, int], res: Tuple[int, int]) -> np.ndarray:
     return np.dstack((dx, -dy))
 
 
-def blend_vector_fields(field_a: np.ndarray, field_b: np.ndarray, f_blend: Callable[[int, int], float]) -> np.ndarray:
+def blend_vector_fields(
+    field_a: np.ndarray, field_b: np.ndarray, f_blend: Callable[[int, int], float]
+) -> np.ndarray:
     """
     Blend two vector fields into a single vector field
     Args:
@@ -45,7 +53,12 @@ def blend_vector_fields(field_a: np.ndarray, field_b: np.ndarray, f_blend: Calla
     """
     assert field_a.shape == field_b.shape
     assert field_a.shape[2] == 2
-    blend = np.array([[f_blend(r, c) for c in range(field_a.shape[1])] for r in range(field_a.shape[0])])[:, :, None]
+    blend = np.array(
+        [
+            [f_blend(r, c) for c in range(field_a.shape[1])]
+            for r in range(field_a.shape[0])
+        ]
+    )[:, :, None]
     return (1 - blend) * field_a + blend * field_b
 
 
@@ -62,10 +75,14 @@ def grid_render_vector_field(field: np.ndarray, line_length: float) -> Drawing:
     return Drawing(lines)
 
 
-def single_linestring_through_field(field: np.ndarray, line_length: int,
-                                    start_pos: Union[np.ndarray, tuple[float, float]],
-                                    speed_mult: float, separation_dist: float,
-                                    linestring_in_progress: Optional[MultiLineString]) -> Optional[LineString]:
+def single_linestring_through_field(
+    field: np.ndarray,
+    line_length: int,
+    start_pos: Union[np.ndarray, tuple[float, float]],
+    speed_mult: float,
+    separation_dist: float,
+    linestring_in_progress: Optional[MultiLineString],
+) -> Optional[LineString]:
     if isinstance(start_pos, tuple):
         start_pos = np.ndarray(start_pos)
     if isinstance(start_pos, np.ndarray):
@@ -74,10 +91,15 @@ def single_linestring_through_field(field: np.ndarray, line_length: int,
     points[0] = start_pos
     for i in range(1, line_length):
         prev_point = points[i - 1]
-        next_point = prev_point + speed_mult * field[round(prev_point[0]), round(prev_point[1])]
+        next_point = (
+            prev_point + speed_mult * field[round(prev_point[0]), round(prev_point[1])]
+        )
         if not point_in_bounds(next_point, 0, 0, *field.shape[:2]):
             break
-        if linestring_in_progress is not None and linestring_in_progress.distance(Point(next_point)) < separation_dist:
+        if (
+            linestring_in_progress is not None
+            and linestring_in_progress.distance(Point(next_point)) < separation_dist
+        ):
             break
         points[i] = next_point
     points = points[~np.all(points == 0, axis=1)]
@@ -85,14 +107,16 @@ def single_linestring_through_field(field: np.ndarray, line_length: int,
         return LineString(points)
 
 
-def line_strings_through_field(field: np.ndarray, line_length: int, line_separation: float) -> MultiLineString:
+def line_strings_through_field(
+    field: np.ndarray, line_length: int, line_separation: float
+) -> MultiLineString:
     line_starts = circle_pack(field.shape[0], field.shape[1], line_separation * 0.8)
     line_strings = None
     consecutive_failures = 0
     for line_start in tqdm(line_starts):
-        line = single_linestring_through_field(field, line_length,
-                                               line_start,
-                                               4, 1, line_strings)
+        line = single_linestring_through_field(
+            field, line_length, line_start, 4, 1, line_strings
+        )
         if line is not None:
             consecutive_failures = 0
             if line_strings is None:
@@ -106,20 +130,28 @@ def line_strings_through_field(field: np.ndarray, line_length: int, line_separat
     return line_strings
 
 
-def assign_to_layers(paths: MultiLineString, n_layers: int, width: float, height: float,
-                     color_cohesion: float = 1) -> list[Drawing]:
+def assign_to_layers(
+    paths: MultiLineString,
+    n_layers: int,
+    width: float,
+    height: float,
+    color_cohesion: float = 1,
+) -> list[Drawing]:
     layers = [[] for _ in range(n_layers)]
     centers = [Point([width, height] * np.random.random(2)) for _ in range(n_layers)]
     for path in paths.geoms:
-        dists = np.array([(1 / path.distance(center)) ** color_cohesion for center in centers])
+        dists = np.array(
+            [(1 / path.distance(center)) ** color_cohesion for center in centers]
+        )
         dists /= np.sum(dists)
         layer = np.random.choice(n_layers, p=dists)
         layers[layer].append(path.coords)
     return [Drawing(layer) for layer in layers]
 
 
-def derive_grid_shape(width: float, height: float, margin: float, grid_dpi: float, grid_res: int) -> \
-        tuple[tuple[int, int], tuple[int, int]]:
+def derive_grid_shape(
+    width: float, height: float, margin: float, grid_dpi: float, grid_res: int
+) -> tuple[tuple[int, int], tuple[int, int]]:
     grid_shape_x = round((width - 2 * margin) * grid_dpi)
     grid_shape_y = round((height - 2 * margin) * grid_dpi)
     if width > height:
@@ -131,10 +163,17 @@ def derive_grid_shape(width: float, height: float, margin: float, grid_dpi: floa
     return (grid_shape_x, grid_shape_y), (grid_res_x, grid_res_y)
 
 
-def render_flow_field(field: np.ndarray, line_length: int, line_separation: float,
-                      n_colors: int, color_cohesion: float) -> list[Drawing]:
+def render_flow_field(
+    field: np.ndarray,
+    line_length: int,
+    line_separation: float,
+    n_colors: int,
+    color_cohesion: float,
+) -> list[Drawing]:
     assert field.ndim == 3
     assert field.shape[2] == 2
     lines = line_strings_through_field(field, line_length, line_separation)
-    layers = assign_to_layers(lines, n_colors, field.shape[0], field.shape[1], color_cohesion)
+    layers = assign_to_layers(
+        lines, n_colors, field.shape[0], field.shape[1], color_cohesion
+    )
     return layers

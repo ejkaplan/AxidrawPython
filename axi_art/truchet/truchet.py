@@ -26,7 +26,7 @@ def diagonal_lines():
         [(1 / 8, 1), (1, 1 / 8)],
         [(3 / 8, 1), (1, 3 / 8)],
         [(5 / 8, 1), (1, 5 / 8)],
-        [(7 / 8, 1), (1, 7 / 8)]
+        [(7 / 8, 1), (1, 7 / 8)],
     ]
     return axi.Drawing(paths)
 
@@ -40,7 +40,7 @@ def chevrons():
         [(5 / 8, 0), (1, 3 / 8)],
         [(1, 5 / 8), (5 / 8, 1)],
         [(7 / 8, 0), (1, 1 / 8)],
-        [(1, 7 / 8), (7 / 8, 1)]
+        [(1, 7 / 8), (7 / 8, 1)],
     ]
     return axi.Drawing(paths)
 
@@ -101,7 +101,9 @@ def edge_circles(samples_per_circle=32):
         for j in range(samples_per_circle):
             y = j / samples_per_circle
             point = np.array([x, y])
-            dist = min(np.linalg.norm(point - [0, 0.5]), np.linalg.norm(point - [1, 0.5]))
+            dist = min(
+                np.linalg.norm(point - [0, 0.5]), np.linalg.norm(point - [1, 0.5])
+            )
             if dist < 3 / 8:
                 if len(path) > 1:
                     paths.append(path)
@@ -114,7 +116,10 @@ def edge_circles(samples_per_circle=32):
 
 
 def truchet_tiles(rows, cols):
-    tiles = ([corner_circles, horizontal_lines, edge_circles, chevrons, diagonal_lines], [1, 0, 0, 0, 0])
+    tiles = (
+        [corner_circles, horizontal_lines, edge_circles, chevrons, diagonal_lines],
+        [1, 0, 0, 0, 0],
+    )
     out = axi.Drawing()
     for x in range(cols):
         for y in range(rows):
@@ -135,7 +140,7 @@ def main():
     drawing = drawing.center(11, 8.5)
     if TEST or axi.device.find_port() is None:
         im = drawing.render(bounds=(0, 0, 11, 8.5))
-        im.write_to_png('truchet.png')
+        im.write_to_png("truchet.png")
     else:
         axi.draw(drawing)
 

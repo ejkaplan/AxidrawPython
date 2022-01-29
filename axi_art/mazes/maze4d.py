@@ -9,8 +9,16 @@ import click
 from axi_art.utils import offset_paths
 
 coord = tuple[int, int, int, int]
-DIRECTIONS = [(-1, 0, 0, 0), (0, -1, 0, 0), (0, 0, -1, 0), (0, 0, 0, -1),
-              (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1)]
+DIRECTIONS = [
+    (-1, 0, 0, 0),
+    (0, -1, 0, 0),
+    (0, 0, -1, 0),
+    (0, 0, 0, -1),
+    (1, 0, 0, 0),
+    (0, 1, 0, 0),
+    (0, 0, 1, 0),
+    (0, 0, 0, 1),
+]
 
 
 def reverse(direction):
@@ -47,11 +55,13 @@ class Cell:
 
 
 def make_grid(width, height, depth, dimensions):
-    cells = {(x, y, z, w): Cell(x, y, z, w)
-             for x in range(width)
-             for y in range(height)
-             for z in range(depth)
-             for w in range(dimensions)}
+    cells = {
+        (x, y, z, w): Cell(x, y, z, w)
+        for x in range(width)
+        for y in range(height)
+        for z in range(depth)
+        for w in range(dimensions)
+    }
     for loc in cells:
         if loc[0] + 1 < width:
             cells[loc].add_neighbor(cells[(loc[0] + 1, loc[1], loc[2], loc[3])])
@@ -69,7 +79,14 @@ def get_bias(d, dir_bias):
     return dir_bias[nonzero]
 
 
-def make_maze(width: int, height: int, depth: int, dimensions: int, p_random: float = 0.0, dir_bias=(1, 1, 1, 1)):
+def make_maze(
+    width: int,
+    height: int,
+    depth: int,
+    dimensions: int,
+    p_random: float = 0.0,
+    dir_bias=(1, 1, 1, 1),
+):
     cells = make_grid(width, height, depth, dimensions)
     frontier = [random.choice(list(cells.values()))]
     visited = {frontier[0]}
@@ -78,7 +95,11 @@ def make_maze(width: int, height: int, depth: int, dimensions: int, p_random: fl
             curr = frontier.pop(random.randrange(len(frontier)))
         else:
             curr = frontier.pop(-1)
-        neighbor_directions = [n for n in curr.get_neighbor_directions() if curr.neighbors[n] not in visited]
+        neighbor_directions = [
+            n
+            for n in curr.get_neighbor_directions()
+            if curr.neighbors[n] not in visited
+        ]
         if len(neighbor_directions) == 0:
             continue
         biases = [get_bias(d, dir_bias) for d in neighbor_directions]
@@ -98,8 +119,11 @@ def bfs(cells, start):
         curr = frontier.pop(0)
         visited.append(curr)
         cell = cells.get(curr)
-        neighbors = [cell.neighbors[n].coords for n in cell.get_neighbor_directions() if
-                     not cell.walls[n] and cell.neighbors[n].coords not in visited + frontier]
+        neighbors = [
+            cell.neighbors[n].coords
+            for n in cell.get_neighbor_directions()
+            if not cell.walls[n] and cell.neighbors[n].coords not in visited + frontier
+        ]
         frontier += neighbors
     return visited
 
@@ -124,19 +148,33 @@ def make_2d_slice_paths(cells, z, w, bounds, endpoints=None):
             if cell.walls[(-1, 0, 0, 0)]:
                 paths.append([(x, y), (x, y + 1)])  # WEST WALL
             else:
-                paths += [[(x, y), (x, y + door_margin)], [(x, y + 1 - door_margin), (x, y + 1)]]  # WEST WALL W/ DOOR
+                paths += [
+                    [(x, y), (x, y + door_margin)],
+                    [(x, y + 1 - door_margin), (x, y + 1)],
+                ]  # WEST WALL W/ DOOR
             if cell.walls[(0, -1, 0, 0)]:
                 paths.append([(x, y), (x + 1, y)])  # NORTH WALL
             else:
-                paths += [[(x, y), (x + door_margin, y)], [(x + 1 - door_margin, y), (x + 1, y)]]  # WEST WALL W/ DOOR
+                paths += [
+                    [(x, y), (x + door_margin, y)],
+                    [(x + 1 - door_margin, y), (x + 1, y)],
+                ]  # WEST WALL W/ DOOR
             if not cell.walls[(0, 0, -1, 0)]:
-                paths.append([(x + 0.4, y + 0.3), (x + 0.5, y + 0.1), (x + 0.6, y + 0.3)])  # up arrow
+                paths.append(
+                    [(x + 0.4, y + 0.3), (x + 0.5, y + 0.1), (x + 0.6, y + 0.3)]
+                )  # up arrow
             if not cell.walls[(0, 0, 1, 0)]:
-                paths.append([(x + 0.4, y + 0.7), (x + 0.5, y + 0.9), (x + 0.6, y + 0.7)])  # down arrow
+                paths.append(
+                    [(x + 0.4, y + 0.7), (x + 0.5, y + 0.9), (x + 0.6, y + 0.7)]
+                )  # down arrow
             if not cell.walls[(0, 0, 0, -1)]:
-                paths.append([(x + 0.3, y + 0.4), (x + 0.1, y + 0.5), (x + 0.3, y + 0.6)])  # left arrow
+                paths.append(
+                    [(x + 0.3, y + 0.4), (x + 0.1, y + 0.5), (x + 0.3, y + 0.6)]
+                )  # left arrow
             if not cell.walls[(0, 0, 0, 1)]:
-                paths.append([(x + 0.7, y + 0.4), (x + 0.9, y + 0.5), (x + 0.7, y + 0.6)])  # right arrow
+                paths.append(
+                    [(x + 0.7, y + 0.4), (x + 0.9, y + 0.5), (x + 0.7, y + 0.6)]
+                )  # right arrow
             if (x, y, z, w) in endpoints:
                 paths.append(circle(x + 0.5, y + 0.5, 0.1))
     # Render the two missing walls
@@ -167,7 +205,11 @@ def astar(cells, start, end):
             return backtrack(prev, curr)
         open_set.remove(curr)
         cell = cells[curr]
-        for neighbor in [cell.neighbors[d].coords for d in cell.get_neighbor_directions() if not cell.walls[d]]:
+        for neighbor in [
+            cell.neighbors[d].coords
+            for d in cell.get_neighbor_directions()
+            if not cell.walls[d]
+        ]:
             tentative_g_score = g_score[curr] + 1
             if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
                 prev[neighbor] = curr
@@ -177,37 +219,62 @@ def astar(cells, start, end):
 
 
 @click.command()
-@click.option('-t', '--test', is_flag=True)
-@click.option('-w', '--width', prompt=True, type=float)
-@click.option('-h', '--height', prompt=True, type=float)
-@click.option('-m', '--margin', prompt=True, type=float)
-@click.option('-r', '--rows', prompt=True, type=int)
-@click.option('-c', '--cols', prompt=True, type=int)
-@click.option('-mr', '--meta-rows', prompt=True, type=int)
-@click.option('-mc', '--meta-cols', prompt=True, type=int)
-@click.option('-rb', '--row-bias', prompt=True, type=float, default=1)
-@click.option('-cb', '--col-bias', prompt=True, type=float, default=1)
-@click.option('-mrb', '--meta-row-bias', prompt=True, type=float, default=1)
-@click.option('-mcb', '--meta-col-bias', prompt=True, type=float, default=1)
-@click.option('-r', '--random_pickup_prob', prompt=True, type=float, default=0)
-def main(test: bool, width: float, height: float, margin: float,
-         rows: int, cols: int, meta_rows: int, meta_cols: int,
-         row_bias: float, col_bias: float, meta_row_bias: float, meta_col_bias: float,
-         random_pickup_prob: float):
+@click.option("-t", "--test", is_flag=True)
+@click.option("-w", "--width", prompt=True, type=float)
+@click.option("-h", "--height", prompt=True, type=float)
+@click.option("-m", "--margin", prompt=True, type=float)
+@click.option("-r", "--rows", prompt=True, type=int)
+@click.option("-c", "--cols", prompt=True, type=int)
+@click.option("-mr", "--meta-rows", prompt=True, type=int)
+@click.option("-mc", "--meta-cols", prompt=True, type=int)
+@click.option("-rb", "--row-bias", prompt=True, type=float, default=1)
+@click.option("-cb", "--col-bias", prompt=True, type=float, default=1)
+@click.option("-mrb", "--meta-row-bias", prompt=True, type=float, default=1)
+@click.option("-mcb", "--meta-col-bias", prompt=True, type=float, default=1)
+@click.option("-r", "--random_pickup_prob", prompt=True, type=float, default=0)
+def main(
+    test: bool,
+    width: float,
+    height: float,
+    margin: float,
+    rows: int,
+    cols: int,
+    meta_rows: int,
+    meta_cols: int,
+    row_bias: float,
+    col_bias: float,
+    meta_row_bias: float,
+    meta_col_bias: float,
+    random_pickup_prob: float,
+):
     bounds = (rows, cols, meta_rows, meta_cols)
-    cells = make_maze(*bounds, p_random=random_pickup_prob, dir_bias=(row_bias, col_bias, meta_row_bias, meta_col_bias))
+    cells = make_maze(
+        *bounds,
+        p_random=random_pickup_prob,
+        dir_bias=(row_bias, col_bias, meta_row_bias, meta_col_bias),
+    )
     end_a = bfs(cells, (0, 0, 0, 0))[-1]
     end_b = bfs(cells, end_a)[-1]
     paths = []
     for floor in range(bounds[2]):
         for dimension in range(bounds[3]):
-            submaze = make_2d_slice_paths(cells, floor, dimension, bounds, endpoints=[end_a, end_b])
-            submaze = offset_paths(submaze, dimension * (bounds[0] + 1), floor * (bounds[1] + 1))
+            submaze = make_2d_slice_paths(
+                cells, floor, dimension, bounds, endpoints=[end_a, end_b]
+            )
+            submaze = offset_paths(
+                submaze, dimension * (bounds[0] + 1), floor * (bounds[1] + 1)
+            )
             paths += submaze
-    drawing = axi.Drawing(paths).scale_to_fit(width, height, margin).join_paths(0.03).sort_paths().center(width, height)
+    drawing = (
+        axi.Drawing(paths)
+        .scale_to_fit(width, height, margin)
+        .join_paths(0.03)
+        .sort_paths()
+        .center(width, height)
+    )
     if test or axi.device.find_port() is None:
         im = drawing.render(bounds=(0, 0, width, height))
-        im.write_to_png('maze_4d.png')
+        im.write_to_png("maze_4d.png")
     else:
         axi.draw(drawing)
 

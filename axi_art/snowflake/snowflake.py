@@ -54,14 +54,17 @@ class DLA:
         return dd[0], self.particles[ii[0]]
 
 
-def snowflake(points: int, attach_radius: float, outer_radius: float, symmetry: int, sigma: float) -> Drawing:
+def snowflake(
+    points: int, attach_radius: float, outer_radius: float, symmetry: int, sigma: float
+) -> Drawing:
     dla = DLA()
     for _ in range(points):
         theta = abs(np.random.normal(0, scale=sigma))
         theta += np.pi / symmetry
         reverse_theta = (theta + np.pi) % (2 * np.pi)
-        particle = Particle(outer_radius * np.array([np.cos(theta), np.sin(theta)]),
-                            reverse_theta)
+        particle = Particle(
+            outer_radius * np.array([np.cos(theta), np.sin(theta)]), reverse_theta
+        )
         dist, neighbor = dla.distance(particle)
         if dist <= attach_radius:
             continue
@@ -91,33 +94,40 @@ def overlay(top: Drawing, bottom: Drawing) -> Drawing:
 
 
 @click.command()
-@click.option('-t', '--test', is_flag=True)
-@click.option('-w', '--width', prompt=True, type=float)
-@click.option('-h', '--height', prompt=True, type=float)
-@click.option('-m', '--margin', prompt=True, type=float)
-@click.option('-ps', '--points_small', prompt=True, type=int)
-@click.option('-pb', '--points_big', prompt=True, type=int)
-@click.option('-ts', '--theta_small', prompt=True, type=float, default=0.2)
-@click.option('-tb', '--theta_big', prompt=True, type=float, default=0.18)
-def main(test: bool, width: float, height: float, margin: float,
-         points_small: int, points_big: int, theta_small: float, theta_big: float):
+@click.option("-t", "--test", is_flag=True)
+@click.option("-w", "--width", prompt=True, type=float)
+@click.option("-h", "--height", prompt=True, type=float)
+@click.option("-m", "--margin", prompt=True, type=float)
+@click.option("-ps", "--points_small", prompt=True, type=int)
+@click.option("-pb", "--points_big", prompt=True, type=int)
+@click.option("-ts", "--theta_small", prompt=True, type=float, default=0.2)
+@click.option("-tb", "--theta_big", prompt=True, type=float, default=0.18)
+def main(
+    test: bool,
+    width: float,
+    height: float,
+    margin: float,
+    points_small: int,
+    points_big: int,
+    theta_small: float,
+    theta_big: float,
+):
     seed = np.random.randint(0, 2 ** 31)
     np.random.seed(seed)
     axi.device.MAX_VELOCITY = 2
     small_flake = snowflake(points_small, 1.5, 10000, 6, theta_small).rotate(np.pi / 6)
     big_flake = snowflake(points_big, 1.5, 10000, 6, theta_big)
     small_flake = overlay(big_flake, small_flake)
-    layers = [small_flake,
-              big_flake]
+    layers = [small_flake, big_flake]
     layers = Drawing.multi_scale_to_fit(layers, width, height, margin)
     layers = [layer.join_paths(0.01).sort_paths() for layer in layers]
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(layers, bounds=(0, 0, width, height))
-        im.write_to_png('snowflake_preview.png')
+        im.write_to_png("snowflake_preview.png")
         im.finish()
     else:
         axi.draw_layers(layers)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

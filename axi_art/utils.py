@@ -9,7 +9,7 @@ def offset_paths(paths, off_x, off_y):
 
 
 def map_range(val, a0, a1, b0, b1):
-    p = (val-a0) / (a1-a0)
+    p = (val - a0) / (a1 - a0)
     return b0 + p * (b1 - b0)
 
 
@@ -29,7 +29,7 @@ class Font(object):
     def justify_text(self, text, width):
         d = self.text(text)
         w = d.width
-        spaces = text.count(' ')
+        spaces = text.count(" ")
         if spaces == 0 or w >= width:
             return d
         e = ((width - w) / spaces) / self.scale
@@ -64,23 +64,23 @@ class Font(object):
     @staticmethod
     def word_wrap(text, width, measure_func):
         result = []
-        for line in text.split('\n'):
+        for line in text.split("\n"):
             fields = itertools.groupby(line, lambda x: x.isspace())
-            fields = [''.join(g) for _, g in fields]
+            fields = ["".join(g) for _, g in fields]
             if len(fields) % 2 == 1:
-                fields.append('')
-            x = ''
+                fields.append("")
+            x = ""
             for a, b in zip(fields[::2], fields[1::2]):
                 w, _ = measure_func(x + a)
                 if w > width:
-                    if x == '':
+                    if x == "":
                         result.append(a)
                         continue
                     else:
                         result.append(x)
-                        x = ''
+                        x = ""
                 x += a + b
-            if x != '':
+            if x != "":
                 result.append(x)
         result = [x.strip() for x in result]
         return result

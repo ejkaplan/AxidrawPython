@@ -24,21 +24,53 @@ def noise_octaves(x, y, octaves, persistence):
     return 2 * total / max_value
 
 
-def noise_line(y, width, amp, samples, x_noise_scale, y_noise_scale, octaves, persistence):
+def noise_line(
+    y, width, amp, samples, x_noise_scale, y_noise_scale, octaves, persistence
+):
     path = []
     for i in range(samples):
         theta = map_range(i, 0, samples, -math.pi, math.pi)
         x_amp = map_range(math.cos(theta), -1, 1, 0, amp)
         x = map_range(i, 0, samples, 0, width)
-        path.append((x, y + x_amp * noise_octaves(x * x_noise_scale, y * y_noise_scale, octaves, persistence)))
+        path.append(
+            (
+                x,
+                y
+                + x_amp
+                * noise_octaves(
+                    x * x_noise_scale, y * y_noise_scale, octaves, persistence
+                ),
+            )
+        )
     return path
 
 
-def noise_field(lines, width, height, samples, amp, x_noise_scale, y_noise_scale, octaves, persistence):
+def noise_field(
+    lines,
+    width,
+    height,
+    samples,
+    amp,
+    x_noise_scale,
+    y_noise_scale,
+    octaves,
+    persistence,
+):
     paths = []
     for i in range(lines):
         y = map_range(i, 0, lines, 0, height)
-        paths.append(noise_line(y, width, amp, samples, x_noise_scale, y_noise_scale, octaves, persistence))
+        paths.append(
+            noise_line(
+                y,
+                width,
+                amp,
+                samples,
+                x_noise_scale,
+                y_noise_scale,
+                octaves,
+                persistence,
+            )
+        )
     return paths
 
 
@@ -79,9 +111,17 @@ def main():
     octaves = 4
     persistence = random.gauss(0.3, 0.1)
     print(amp, x_noise_scale, y_noise_scale, octaves, persistence)
-    paths = noise_field(lines=100, width=12, height=8.5, samples=1000, amp=amp,
-                        x_noise_scale=x_noise_scale, y_noise_scale=y_noise_scale, octaves=octaves,
-                        persistence=persistence)
+    paths = noise_field(
+        lines=100,
+        width=12,
+        height=8.5,
+        samples=1000,
+        amp=amp,
+        x_noise_scale=x_noise_scale,
+        y_noise_scale=y_noise_scale,
+        octaves=octaves,
+        persistence=persistence,
+    )
     paths = occlude(paths)
     drawing = axi.Drawing(paths).scale_to_fit(12, 9, 0).sort_paths()
     drawing = drawing.join_paths(0.03).simplify_paths(0.001)
@@ -91,7 +131,7 @@ def main():
     drawing = drawing.scale_to_fit(12, 9, 0.5).center(12, 9).sort_paths()
     if TEST or axi.device.find_port() is None:
         im = drawing.render()
-        im.write_to_png('noise_lines.png')
+        im.write_to_png("noise_lines.png")
     else:
         axi.draw(drawing)
 

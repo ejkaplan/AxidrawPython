@@ -42,8 +42,10 @@ def im_lines(lines, pixels, samples, waves_per_line):
 
 def main():
     axi.device.MAX_VELOCITY = 2
-    url = "https://pbs.twimg.com/profile_images/1309133913953099776/PEgTVuQB_400x400.jpg"
-    img = Image.open(requests.get(url, stream=True).raw).convert('L')
+    url = (
+        "https://pbs.twimg.com/profile_images/1309133913953099776/PEgTVuQB_400x400.jpg"
+    )
+    img = Image.open(requests.get(url, stream=True).raw).convert("L")
     pixels = np.asarray(img)
     paths = im_lines(100, pixels, 1000, 150)
     drawing = axi.Drawing(paths).scale_to_fit(11, 8.5, 0).sort_paths()
@@ -51,7 +53,7 @@ def main():
     drawing = drawing.scale_to_fit(11, 8.5, 0.5).center(11, 8.5).sort_paths()
     if axi.device.find_port() is None:
         im = drawing.render()
-        im.write_to_png('image_lines.png')
+        im.write_to_png("image_lines.png")
     else:
         axi.draw(drawing)
 
