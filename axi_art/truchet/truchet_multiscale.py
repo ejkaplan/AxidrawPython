@@ -96,7 +96,7 @@ def truchet_corner_circles(size: float, n_circles: int) -> Drawing:
         if isinstance(diffed, LineString):
             paths.append(diffed.coords)
         elif isinstance(diffed, MultiLineString):
-            paths.extend([line.coords for line in diffed])
+            paths.extend([line.coords for line in diffed.geoms])
     return Drawing(paths)
 
 
@@ -112,7 +112,7 @@ def truchet_corner_circle_highlights(size: float, n_circles: int) -> Drawing:
         if isinstance(diffed, LineString):
             paths.append(diffed.coords)
         elif isinstance(diffed, MultiLineString):
-            paths.extend([line.coords for line in diffed])
+            paths.extend([line.coords for line in diffed.geoms])
     return Drawing(paths)
 
 
@@ -134,7 +134,7 @@ def truchet_crossed_lines(size: float, n_lines: int) -> Drawing:
         if isinstance(diffed, LineString):
             paths.append(diffed.coords)
         elif isinstance(diffed, MultiLineString):
-            paths.extend([line.coords for line in diffed])
+            paths.extend([line.coords for line in diffed.geoms])
     return Drawing(paths)
 
 
@@ -156,7 +156,7 @@ def truchet_crossed_lines_highlights(size: float, n_lines: int) -> Drawing:
         if isinstance(diffed, LineString):
             paths.append(diffed.coords)
         elif isinstance(diffed, MultiLineString):
-            paths.extend([line.coords for line in diffed])
+            paths.extend([line.coords for line in diffed.geoms])
     return Drawing(paths)
 
 
