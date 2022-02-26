@@ -115,8 +115,8 @@ def main(
     seed = np.random.randint(0, 2 ** 31)
     np.random.seed(seed)
     axi.device.MAX_VELOCITY = 2
-    small_flake = snowflake(points_small, 1.5, 10000, 6, theta_small).rotate(np.pi / 6)
-    big_flake = snowflake(points_big, 1.5, 10000, 6, theta_big)
+    small_flake = snowflake(points_bottom, 1.5, 10000, 6, theta_bottom).rotate(np.pi / 6)
+    big_flake = snowflake(points_top, 1.5, 10000, 6, theta_top)
     small_flake = overlay(big_flake, small_flake)
     layers = [small_flake, big_flake]
     layers = Drawing.multi_scale_to_fit(layers, width, height, margin)

@@ -43,7 +43,7 @@ class Grid:
         legal_placements = list(
             filter(
                 lambda x: np.all(
-                    self.grid[x[0] : x[0] + size, x[1] : x[1] + size] == 0
+                    self.grid[x[0]: x[0] + size, x[1]: x[1] + size] == 0
                 ),
                 legal_placements,
             )
@@ -51,30 +51,31 @@ class Grid:
         if len(legal_placements) == 0:
             return False
         coord = choice(legal_placements)
-        self.grid[coord[0] : coord[0] + size, coord[1] : coord[1] + size] = 1
+        self.grid[coord[0]: coord[0] + size, coord[1]: coord[1] + size] = 1
         self._boxes.append(Box(coord[0], coord[1], size))
         return True
 
-    def render(self, p_turn: float) -> tuple[Drawing, Drawing]:
-        out = Drawing()
-        highlights = Drawing()
-        for box in self.boxes:
-            if np.random.random() < p_turn:
-                tile = truchet_corner_circles(box.size, 2 * box.size)
-                highlight = truchet_corner_circle_highlights(box.size, 2 * box.size)
-            else:
-                tile = truchet_crossed_lines(box.size, 2 * box.size)
-                highlight = truchet_crossed_lines_highlights(box.size, 2 * box.size)
-            tile = tile.translate(-box.size / 2, -box.size / 2)
-            angle = np.random.choice([0, np.pi / 2, np.pi, 3 * np.pi / 2])
-            tile = tile.rotate(angle)
-            tile = tile.translate(box.c + box.size / 2, box.r + box.size / 2)
-            out.add(tile)
-            highlight = highlight.translate(-box.size / 2, -box.size / 2)
-            highlight = highlight.rotate(angle)
-            highlight = highlight.translate(box.c + box.size / 2, box.r + box.size / 2)
-            highlights.add(highlight)
-        return out, highlights
+
+def render(grid: Grid, p_turn: float) -> list[Drawing]:
+    out = Drawing()
+    highlights = Drawing()
+    for box in grid.boxes:
+        if np.random.random() < p_turn:
+            tile = truchet_corner_circles(box.size, 2 * box.size)
+            highlight = truchet_corner_circle_highlights(box.size, 2 * box.size)
+        else:
+            tile = truchet_crossed_lines(box.size, 2 * box.size)
+            highlight = truchet_crossed_lines_highlights(box.size, 2 * box.size)
+        tile = tile.translate(-box.size / 2, -box.size / 2)
+        angle = np.random.choice([0, np.pi / 2, np.pi, 3 * np.pi / 2])
+        tile = tile.rotate(angle)
+        tile = tile.translate(box.c + box.size / 2, box.r + box.size / 2)
+        out.add(tile)
+        highlight = highlight.translate(-box.size / 2, -box.size / 2)
+        highlight = highlight.rotate(angle)
+        highlight = highlight.translate(box.c + box.size / 2, box.r + box.size / 2)
+        highlights.add(highlight)
+    return [out, highlights]
 
 
 def arc(x: float, y: float, r: float, start_angle=0, end_angle=2 * np.pi) -> Path:
@@ -179,16 +180,16 @@ def make_grid(width: int, height: int, max_block_size: int):
 @click.option("-b", "--max-block-size", prompt=True, type=int)
 @click.option("-p", "--prob_turn", prompt=True, type=float)
 def main(
-    test: bool,
-    width: float,
-    height: float,
-    margin: float,
-    rows: int,
-    max_block_size: int,
-    prob_turn: float,
+        test: bool,
+        width: float,
+        height: float,
+        margin: float,
+        rows: int,
+        max_block_size: int,
+        prob_turn: float,
 ):
     grid = make_grid(rows, round(rows * height / width), max_block_size)
-    layers = grid.render(prob_turn)
+    layers = render(grid, prob_turn)
     layers = Drawing.multi_scale_to_fit(list(layers), width, height, padding=margin)
     layers = [layer.join_paths(0.05).sort_paths() for layer in layers]
     if test or axi.device.find_port() is None:
