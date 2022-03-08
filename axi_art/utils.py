@@ -2,6 +2,7 @@ import itertools
 import string
 
 import axi
+import numpy as np
 
 
 def offset_paths(paths, off_x, off_y):
