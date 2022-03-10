@@ -1,12 +1,8 @@
-from io import BytesIO
-
 import axi
 import click
 import numpy as np
-import requests
 from PIL import ImageEnhance, Image
 from axi import Drawing
-from matplotlib import pyplot as plt
 
 jarvis = np.array([[0, 0, 0, 7, 5], [3, 5, 7, 5, 3], [1, 3, 5, 3, 1]]) / 48
 
@@ -170,7 +166,7 @@ def main(
     brightness: float,
     contrast: float,
 ):
-    img = Image.open('family.jpg').convert("L")
+    img = Image.open("family.jpg").convert("L")
     drawing = hatch(img, brightness, contrast, line_gap, line_res)
     drawing = drawing.scale_to_fit(width, height, margin).center(width, height)
     if test or axi.device.find_port() is None:

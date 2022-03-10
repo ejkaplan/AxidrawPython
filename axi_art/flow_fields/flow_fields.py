@@ -51,8 +51,14 @@ def blend_vector_fields(
 
     Returns: The new vector field
     """
-    assert field_a.shape == field_b.shape
-    assert field_a.shape[2] == 2
+    if field_a.shape[0] < field_b.shape[0]:
+        field_b = field_b[: field_a.shape[0], :, :]
+    elif field_a.shape[0] > field_b.shape[0]:
+        field_a = field_a[: field_b.shape[0], :, :]
+    if field_a.shape[1] < field_b.shape[1]:
+        field_b = field_b[:, : field_a.shape[1], :]
+    elif field_a.shape[1] > field_b.shape[1]:
+        field_a = field_a[:, : field_b.shape[1], :]
     blend = np.array(
         [
             [f_blend(r, c) for c in range(field_a.shape[1])]
@@ -150,10 +156,10 @@ def assign_to_layers(
 
 
 def derive_grid_shape(
-    width: float, height: float, margin: float, grid_dpi: float, grid_res: int
+    width: float, height: float, margin: float, grid_res: int
 ) -> tuple[tuple[int, int], tuple[int, int]]:
-    grid_shape_x = round((width - 2 * margin) * grid_dpi)
-    grid_shape_y = round((height - 2 * margin) * grid_dpi)
+    grid_shape_x = round((width - 2 * margin) * 40)
+    grid_shape_y = round((height - 2 * margin) * 40)
     if width > height:
         grid_res_x, grid_res_y = grid_res, round(grid_shape_y * grid_res / grid_shape_x)
     else:

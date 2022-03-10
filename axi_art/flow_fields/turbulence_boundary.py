@@ -1,6 +1,7 @@
 import axi
 import click
 import numpy as np
+from PIL import Image, ImageFilter
 from axi import Drawing
 
 from axi_art.flow_fields.flow_fields import (
@@ -15,39 +16,55 @@ def logistic(x: float, midpoint: float, steepness: float) -> float:
     return 1 / (1 + np.exp(-steepness * (x - midpoint)))
 
 
+def resize_and_center_image(
+    grid_shape: tuple[int, int], img: Image.Image, shrink_factor: float, blur: float
+) -> np.ndarray:
+    img = img.convert("L")
+    img_ratio = img.width / img.height
+    grid_ratio = grid_shape[0] / grid_shape[1]
+    if img_ratio > grid_ratio:
+        w, h = grid_shape[0], img.height * grid_shape[1] // img.width
+    else:
+        w, h = img.width * grid_shape[0] // img.height, grid_shape[1]
+    img = img.resize((int(shrink_factor * w), int(shrink_factor * h)))
+    img = img.filter(ImageFilter.GaussianBlur(3))
+    img = np.asarray(img)
+    out = 255 * np.ones(grid_shape)
+    x, y = out.shape[0] // 2 - img.shape[0] // 2, out.shape[1] // 2 - img.shape[1] // 2
+    out[x : x + img.shape[0], y : y + img.shape[1]] = img
+    return out / 255
+
+
 @click.command()
 @click.option("-t", "--test", is_flag=True)
 @click.option("-w", "--width", prompt=True, type=float)
 @click.option("-h", "--height", prompt=True, type=float)
 @click.option("-m", "--margin", prompt=True, type=float, default=0.5)
-@click.option("-sx", "--grid-dpi", prompt=True, type=int, default=25)
-@click.option("-ry", "--grid-res", prompt=True, type=int, default=5)
+@click.option("-r0", "--grid-res-0", prompt=True, type=int, default=1)
+@click.option("-r0", "--grid-res-1", prompt=True, type=int, default=6)
 @click.option("-l", "--line-length", prompt=True, type=int, default=200)
 @click.option("-l", "--line-separation", prompt=True, type=float, default=5)
 @click.option("-cn", "--n-colors", prompt=True, type=int, default=3)
 @click.option("-cc", "--color-cohesion", prompt=True, type=float, default=1.2)
-@click.option("-mid", "--midpoint", prompt=True, type=float, default=-0.2)
-@click.option("-st", "--steepness", prompt=True, type=float, default=4)
 def main(
     test: bool,
     width: float,
     height: float,
     margin: float,
-    grid_dpi: float,
-    grid_res: int,
+    grid_res_0: int,
+    grid_res_1: int,
     line_length: int,
     line_separation: float,
     n_colors: int,
     color_cohesion: float,
-    midpoint: float,
-    steepness: float,
 ):
-    grid_shape, grid_res = derive_grid_shape(width, height, margin, grid_dpi, grid_res)
-    curl = curl_noise(grid_shape, grid_res)
-    horizontal = np.ones(curl.shape) * [0.5, 0]
-    field = blend_vector_fields(
-        horizontal, curl, lambda x, y: logistic(x / grid_shape[0], midpoint, steepness)
-    )
+    grid_shape_0, grid_res_0 = derive_grid_shape(width, height, margin, grid_res_0)
+    grid_shape_1, grid_res_1 = derive_grid_shape(width, height, margin, grid_res_1)
+    curl0 = curl_noise(grid_shape_0, grid_res_0)
+    curl1 = curl_noise(grid_shape_1, grid_res_1)
+    img = Image.open("heart.png")
+    img = 1 - resize_and_center_image(grid_shape_0, img, 0.8, 50)
+    field = blend_vector_fields(curl0, curl1, lambda x, y: img[y, x])
     layers = render_flow_field(
         field, line_length, line_separation, n_colors, color_cohesion
     )
