@@ -20,18 +20,13 @@ def resize_and_center_image(
     grid_shape: tuple[int, int], img: Image.Image, shrink_factor: float, blur: float
 ) -> np.ndarray:
     img = img.convert("L")
-    img_ratio = img.width / img.height
-    grid_ratio = grid_shape[0] / grid_shape[1]
-    if img_ratio > grid_ratio:
-        w, h = grid_shape[0], img.height * grid_shape[1] // img.width
-    else:
-        w, h = img.width * grid_shape[0] // img.height, grid_shape[1]
-    img = img.resize((int(shrink_factor * w), int(shrink_factor * h)))
-    img = img.filter(ImageFilter.GaussianBlur(3))
+    scale = shrink_factor * min(grid_shape[0] / img.width, grid_shape[1] / img.height)
+    img = img.resize((int(scale * img.width), int(scale * img.height)))
+    img = img.filter(ImageFilter.GaussianBlur(blur))
     img = np.asarray(img)
     out = 255 * np.ones(grid_shape)
-    x, y = out.shape[0] // 2 - img.shape[0] // 2, out.shape[1] // 2 - img.shape[1] // 2
-    out[x : x + img.shape[0], y : y + img.shape[1]] = img
+    x, y = out.shape[1] // 2 - img.shape[0] // 2, out.shape[0] // 2 - img.shape[1] // 2
+    out[y : y + img.shape[1], x : x + img.shape[0]] = img.T
     return out / 255
 
 
@@ -43,9 +38,10 @@ def resize_and_center_image(
 @click.option("-r0", "--grid-res-0", prompt=True, type=int, default=1)
 @click.option("-r0", "--grid-res-1", prompt=True, type=int, default=6)
 @click.option("-l", "--line-length", prompt=True, type=int, default=200)
-@click.option("-l", "--line-separation", prompt=True, type=float, default=5)
+@click.option("-l", "--line-separation", prompt=True, type=float, default=4)
 @click.option("-cn", "--n-colors", prompt=True, type=int, default=3)
-@click.option("-cc", "--color-cohesion", prompt=True, type=float, default=1.2)
+@click.option("-cc", "--color-cohesion", prompt=True, type=float, default=2)
+@click.option('-b', '--img-blur', prompt=True, type=float, default=5)
 def main(
     test: bool,
     width: float,
@@ -57,13 +53,14 @@ def main(
     line_separation: float,
     n_colors: int,
     color_cohesion: float,
+    img_blur: float,
 ):
     grid_shape_0, grid_res_0 = derive_grid_shape(width, height, margin, grid_res_0)
     grid_shape_1, grid_res_1 = derive_grid_shape(width, height, margin, grid_res_1)
-    curl0 = curl_noise(grid_shape_0, grid_res_0)
+    curl0 = curl_noise(grid_shape_0, grid_res_0) * 0.5
     curl1 = curl_noise(grid_shape_1, grid_res_1)
     img = Image.open("heart.png")
-    img = 1 - resize_and_center_image(grid_shape_0, img, 0.8, 50)
+    img = 1 - resize_and_center_image(curl1.shape[:2], img, 0.8, img_blur)
     field = blend_vector_fields(curl0, curl1, lambda x, y: img[y, x])
     layers = render_flow_field(
         field, line_length, line_separation, n_colors, color_cohesion

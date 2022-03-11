@@ -61,7 +61,7 @@ def blend_vector_fields(
         field_a = field_a[:, : field_b.shape[1], :]
     blend = np.array(
         [
-            [f_blend(r, c) for c in range(field_a.shape[1])]
+            [f_blend(c, r) for c in range(field_a.shape[1])]
             for r in range(field_a.shape[0])
         ]
     )[:, :, None]
