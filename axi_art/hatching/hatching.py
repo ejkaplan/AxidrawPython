@@ -3,6 +3,7 @@ import click
 import numpy as np
 from PIL import ImageEnhance, Image
 from axi import Drawing
+from tqdm import tqdm
 
 jarvis = np.array([[0, 0, 0, 7, 5], [3, 5, 7, 5, 3], [1, 3, 5, 3, 1]]) / 48
 
@@ -31,19 +32,25 @@ def dither(
 ) -> tuple[np.ndarray, np.ndarray]:
     working_img = np.copy(img).astype("float64")
     out = np.ones(img.shape) * levels.size
-    for r in range(original_size[1]):
-        for c in range(original_size[0]):
-            new_val, error, idx = snap(working_img[r, c], levels)
-            out[r, c] = idx
-            working_img[r, c] = new_val
-            diffuse = error * kernel
-            r_upper_bound = min(original_size[1] - r - 1, kernel.shape[0])
-            c_lower_bound = min(c, kernel.shape[1] // 2)
-            c_upper_bound = min(original_size[0] - c - 1, kernel.shape[1] // 2 + 1)
-            working_img[
-                r : r + r_upper_bound, c - c_lower_bound : c + c_upper_bound
-            ] += diffuse[0:r_upper_bound, 2 - c_lower_bound : 2 + c_upper_bound]
+    with tqdm(total=original_size[0]*original_size[1]) as pbar:
+        for r in range(original_size[1]):
+            for c in range(original_size[0]):
+                new_val, error, idx = snap(working_img[r, c], levels)
+                out[r, c] = idx
+                working_img[r, c] = new_val
+                diffuse = error * kernel
+                r_upper_bound = min(original_size[1] - r - 1, kernel.shape[0])
+                c_lower_bound = min(c, kernel.shape[1] // 2)
+                c_upper_bound = min(original_size[0] - c - 1, kernel.shape[1] // 2 + 1)
+                working_img[
+                    r : r + r_upper_bound, c - c_lower_bound : c + c_upper_bound
+                ] += diffuse[0:r_upper_bound, 2 - c_lower_bound : 2 + c_upper_bound]
+                pbar.update(1)
     return out, working_img
+
+
+def rescale(x: np.ndarray, envelope: tuple[float, float]) -> np.ndarray:
+    return (x - envelope[0]) * 255 / (envelope[1] - envelope[0])
 
 
 def hatch(
@@ -63,19 +70,7 @@ def hatch(
     master_mask, _ = dither(
         img,
         jarvis,
-        np.array(
-            [
-                1 * 255 // 9,
-                2 * 255 // 9,
-                3 * 255 // 9,
-                4 * 255 // 9,
-                5 * 255 // 9,
-                6 * 255 // 9,
-                7 * 255 // 9,
-                8 * 255 // 9,
-                255,
-            ]
-        ),
+        np.linspace(0, 255, num=9, endpoint=True),
         original_size,
     )
     vert_mask_0 = master_mask <= 0
@@ -166,9 +161,10 @@ def main(
     brightness: float,
     contrast: float,
 ):
-    img = Image.open("family.jpg").convert("L")
+    img = Image.open("matt&sarah_edited.jpg").convert("L")
     drawing = hatch(img, brightness, contrast, line_gap, line_res)
     drawing = drawing.scale_to_fit(width, height, margin).center(width, height)
+    drawing = drawing.sort_paths()
     if test or axi.device.find_port() is None:
         im = drawing.render(bounds=(0, 0, width, height))
         im.write_to_png("hatch.png")

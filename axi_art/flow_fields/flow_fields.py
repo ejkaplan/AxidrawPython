@@ -116,7 +116,7 @@ def single_linestring_through_field(
 def line_strings_through_field(
     field: np.ndarray, line_length: int, line_separation: float
 ) -> MultiLineString:
-    line_starts = circle_pack(field.shape[0], field.shape[1], line_separation * 0.8)
+    line_starts = circle_pack(field.shape[0], field.shape[1], line_separation * 0.5)
     line_strings = None
     consecutive_failures = 0
     for line_start in tqdm(line_starts):
