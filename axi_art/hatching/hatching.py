@@ -32,7 +32,7 @@ def dither(
 ) -> tuple[np.ndarray, np.ndarray]:
     working_img = np.copy(img).astype("float64")
     out = np.ones(img.shape) * levels.size
-    with tqdm(total=original_size[0]*original_size[1]) as pbar:
+    with tqdm(total=original_size[0] * original_size[1]) as pbar:
         for r in range(original_size[1]):
             for c in range(original_size[0]):
                 new_val, error, idx = snap(working_img[r, c], levels)

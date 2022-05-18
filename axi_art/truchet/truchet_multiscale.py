@@ -43,7 +43,7 @@ class Grid:
         legal_placements = list(
             filter(
                 lambda x: np.all(
-                    self.grid[x[0]: x[0] + size, x[1]: x[1] + size] == 0
+                    self.grid[x[0] : x[0] + size, x[1] : x[1] + size] == 0
                 ),
                 legal_placements,
             )
@@ -51,7 +51,7 @@ class Grid:
         if len(legal_placements) == 0:
             return False
         coord = choice(legal_placements)
-        self.grid[coord[0]: coord[0] + size, coord[1]: coord[1] + size] = 1
+        self.grid[coord[0] : coord[0] + size, coord[1] : coord[1] + size] = 1
         self._boxes.append(Box(coord[0], coord[1], size))
         return True
 
@@ -180,13 +180,13 @@ def make_grid(width: int, height: int, max_block_size: int):
 @click.option("-b", "--max-block-size", prompt=True, type=int)
 @click.option("-p", "--prob_turn", prompt=True, type=float)
 def main(
-        test: bool,
-        width: float,
-        height: float,
-        margin: float,
-        rows: int,
-        max_block_size: int,
-        prob_turn: float,
+    test: bool,
+    width: float,
+    height: float,
+    margin: float,
+    rows: int,
+    max_block_size: int,
+    prob_turn: float,
 ):
     grid = make_grid(rows, round(rows * height / width), max_block_size)
     layers = render(grid, prob_turn)

@@ -41,7 +41,7 @@ def resize_and_center_image(
 @click.option("-l", "--line-separation", prompt=True, type=float, default=4)
 @click.option("-cn", "--n-colors", prompt=True, type=int, default=3)
 @click.option("-cc", "--color-cohesion", prompt=True, type=float, default=2)
-@click.option('-b', '--img-blur', prompt=True, type=float, default=5)
+@click.option("-b", "--img-blur", prompt=True, type=float, default=5)
 def main(
     test: bool,
     width: float,

@@ -3,8 +3,14 @@ import click
 import numpy as np
 from axi import Drawing
 
-from axi_art.truchet.truchet_multiscale import truchet_corner_circles, truchet_corner_circle_highlights, \
-    truchet_crossed_lines, truchet_crossed_lines_highlights, Grid, make_grid
+from axi_art.truchet.truchet_multiscale import (
+    truchet_corner_circles,
+    truchet_corner_circle_highlights,
+    truchet_crossed_lines,
+    truchet_crossed_lines_highlights,
+    Grid,
+    make_grid,
+)
 
 
 def render_random_colors(grid: Grid, p_turn: float, colors: int) -> list[Drawing]:
@@ -39,14 +45,14 @@ def render_random_colors(grid: Grid, p_turn: float, colors: int) -> list[Drawing
 @click.option("-p", "--prob_turn", prompt=True, type=float)
 @click.option("-c", "--colors", prompt=True, type=int)
 def main(
-        test: bool,
-        width: float,
-        height: float,
-        margin: float,
-        rows: int,
-        max_block_size: int,
-        prob_turn: float,
-        colors: int,
+    test: bool,
+    width: float,
+    height: float,
+    margin: float,
+    rows: int,
+    max_block_size: int,
+    prob_turn: float,
+    colors: int,
 ):
     grid = make_grid(rows, round(rows * height / width), max_block_size)
     layers = render_random_colors(grid, prob_turn, colors)
