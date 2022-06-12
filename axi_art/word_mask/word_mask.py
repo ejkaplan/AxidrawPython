@@ -11,10 +11,11 @@ def map(val: float, lo0: float, hi0: float, lo1: float, hi1: float):
 
 
 def letter_grid(
-    font, mask: Image, text: str, width: float, height: float
+    font0, font1, mask: Image, text: str, width: float, height: float
 ) -> list[Drawing]:
-    letters: dict[str, Drawing] = {c: font.text(c) for c in set(text)}
-    row_height = 1.3 * max(d.height for d in letters.values())
+    letters_a: dict[str, Drawing] = {c: font0.text(c) for c in set(text)}
+    letters_b: dict[str, Drawing] = {c: font1.text(c) for c in set(text)}
+    row_height = 1.3 * max(d.height for d in letters_b.values())
     out = [Drawing(), Drawing()]
     y = 0
     row_count = 0
@@ -23,11 +24,13 @@ def letter_grid(
         i = row_count % len(text)
         while x < width:
             if (c := text[i]) != " ":
-                d = letters[c].translate(x, y)
+                d = letters_a[c].translate(x, y)
                 try:
                     mask_x = int(map(x + d.width / 2, 0, width, 0, mask.size[0]))
                     mask_y = int(map(y + d.height / 2, 0, height, 0, mask.size[1]))
                     layer = mask.getpixel((mask_x, mask_y)) > 127
+                    if not layer:
+                        d = letters_b[c].translate(x, y)
                 except IndexError:
                     layer = 1
                 out[layer] = Drawing.combine([out[layer], d])
@@ -48,7 +51,8 @@ def rect(x: float, y: float, w: float, h: float) -> Drawing:
 def main():
     im = Image.open("name.png").convert("1")
     f = Font(axi.FUTURAL, 7)
-    layers = letter_grid(f, im, "they them ", 3.5, 2.25)
+    f_b = Font(axi.FUTURAM, 7)
+    layers = letter_grid(f, f_b, im, "they them ", 3.5, 2.25)
     layers = [layer.translate(0.5, 0.5) for layer in layers]
     layers[0] = Drawing.combine([layers[0], rect(0.5, 0.5, 3.5, 2.25)])
     if axi.device.find_port() is None:
