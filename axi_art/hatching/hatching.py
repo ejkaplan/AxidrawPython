@@ -161,7 +161,7 @@ def main(
     brightness: float,
     contrast: float,
 ):
-    img = Image.open("matt&sarah_edited.jpg").convert("L")
+    img = Image.open("swish.jpg").convert("L")
     drawing = hatch(img, brightness, contrast, line_gap, line_res)
     drawing = drawing.scale_to_fit(width, height, margin).center(width, height)
     drawing = drawing.sort_paths()

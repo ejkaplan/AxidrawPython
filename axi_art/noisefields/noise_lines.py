@@ -107,7 +107,7 @@ def main():
     axi.device.MAX_VELOCITY = 2
     amp = random.gauss(0.75, 0.1)
     x_noise_scale = random.gauss(0.7, 0.05)
-    y_noise_scale = random.gauss(0.7, 0.05)
+    y_noise_scale = random.gauss(0.8, 0.05)
     octaves = 4
     persistence = random.gauss(0.3, 0.1)
     print(amp, x_noise_scale, y_noise_scale, octaves, persistence)
