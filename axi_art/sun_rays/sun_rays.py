@@ -6,8 +6,7 @@ import axi
 import click
 import numpy as np
 from axi import Drawing
-from shapely.geometry import LineString, MultiLineString
-
+from shapely.geometry import LineString, MultiLineString, Polygon, GeometryCollection
 
 rng = np.random.default_rng()
 
@@ -50,8 +49,8 @@ class RadialSun:
         return [spoke.linestring for spoke in self.spokes]
 
     @property
-    def central_disc(self) -> LineString:
-        return LineString([spoke.anchor for spoke in self.spokes])
+    def central_disc(self) -> Polygon:
+        return Polygon([spoke.anchor for spoke in self.spokes])
 
     def grow(self, obstacle: MultiLineString, sep: float) -> bool:
         growth = False
@@ -77,7 +76,7 @@ def radial_sun_drawing(
     ]
     suns = [RadialSun(center, spokes, radius) for center in centers]
     obstacles = {
-        sun: MultiLineString([boundary, *[x.central_disc for x in suns if x != sun]])
+        sun: GeometryCollection([boundary, *[x.central_disc for x in suns if x != sun]])
         for sun in suns
     }
     while True:
@@ -87,18 +86,17 @@ def radial_sun_drawing(
         if not growth:
             break
     drawings = [sun.drawing for sun in suns]
-    drawings = Drawing.multi_scale_to_fit(drawings, width, height, 0.5)
     return drawings
 
 
 @click.command()
 @click.option("-t", "--test", is_flag=True)
-@click.option("-w", "--width", prompt=True, type=float)
-@click.option("-h", "--height", prompt=True, type=float)
-@click.option("-m", "--margin", prompt=True, type=float)
-@click.option("-s", "--spokes", prompt=True, type=int)
+@click.option("-w", "--width", prompt=True, type=float, default=8)
+@click.option("-h", "--height", prompt=True, type=float, default=8)
+@click.option("-m", "--margin", prompt=True, type=float, default=0.5)
+@click.option("-s", "--spokes", prompt=True, type=int, default=100)
 @click.option("-n", "--suns", prompt=True, type=int)
-@click.option("-r", "--radius", prompt=True, type=float)
+@click.option("-r", "--radius", prompt=True, type=float, default=1.0)
 def main(
     test: bool,
     width: float,
@@ -111,6 +109,7 @@ def main(
     drawings = radial_sun_drawing(
         width - 2 * margin, height - 2 * margin, suns, spokes, radius
     )
+    drawings = Drawing.multi_scale_to_fit(drawings, width, height, margin)
 
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(drawings, bounds=(0, 0, 8, 8))
