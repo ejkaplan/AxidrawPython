@@ -62,7 +62,7 @@ class RadialSun:
 
     @property
     def drawing(self) -> Drawing:
-        return Drawing([(spoke.anchor, spoke.endpoint) for spoke in self.spokes])
+        return Drawing([(spoke.anchor, spoke.endpoint) for spoke in self.spokes]).sort_paths()
 
 
 def radial_sun_drawing(

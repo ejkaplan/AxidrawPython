@@ -53,7 +53,7 @@ def main():
     f = Font(axi.FUTURAL, 7)
     f_b = Font(axi.FUTURAM, 7)
     layers = letter_grid(f, f_b, im, "they them ", 3.5, 2.25)
-    layers = [layer.translate(0.5, 0.5) for layer in layers]
+    layers = [layer.translate(0.5, 0.5).sort_paths() for layer in layers]
     layers[0] = Drawing.combine([layers[0], rect(0.5, 0.5, 3.5, 2.25)])
     if axi.device.find_port() is None:
         im = Drawing.render_layers(layers, bounds=(0, 0, 11, 8.5))
