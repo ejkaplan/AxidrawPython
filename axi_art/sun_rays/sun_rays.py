@@ -77,7 +77,13 @@ def n_gon(n: int, x: float, y: float, r: float) -> Polygon:
 
 
 def random_n_gons(
-    width: float, height: float, min_r: float, max_r: float, shapes: int, separation: float
+    width: float,
+    height: float,
+    min_r: float,
+    max_r: float,
+    shapes: int,
+    separation: float,
+    margin: float,
 ) -> list[Polygon]:
     out: list[Polygon] = []
     sides = rng.choice([3, 4, 6, 200], shapes, False)
@@ -85,8 +91,8 @@ def random_n_gons(
         r = rng.uniform(min_r, max_r)
         shape = n_gon(
             sides[len(out)],
-            rng.uniform(r, width - r),
-            rng.uniform(r, height - r),
+            rng.uniform(margin + r, width - r - margin),
+            rng.uniform(margin + r, height - r - margin),
             r,
         )
         shape = rotate(shape, rng.uniform(0, 360), "centroid")
@@ -122,7 +128,9 @@ def main(
     separation: float,
 ):
     dw, dh = width - 2 * margin, height - 2 * margin
-    emitters = random_n_gons(dw, dh, min_radius, max_radius, emitters, separation)
+    emitters = random_n_gons(
+        dw, dh, min_radius, max_radius, emitters, separation, margin
+    )
     drawings = radial_drawing(dw, dh, emitters, spokes)
     drawings = Drawing.multi_scale_to_fit(drawings, width, height, margin)
 
