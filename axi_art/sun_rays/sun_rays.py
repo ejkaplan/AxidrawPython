@@ -63,7 +63,7 @@ def radial_drawing(
             if None in (start, end) or start.distance(end) < 1e-5:
                 continue
             lines.append([start.coords[0], end.coords[0]])
-        drawings.append(Drawing(lines))
+        drawings.append(Drawing(lines).sort_paths())
     return drawings
 
 
