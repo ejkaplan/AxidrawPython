@@ -62,7 +62,10 @@ def radial_drawing(
             end = nearest_point(start, obstacles.intersection(ray))
             if None in (start, end) or start.distance(end) < 1e-5:
                 continue
-            lines.append([start.coords[0], end.coords[0]])
+            try:
+                lines.append([start.coords[0], end.coords[0]])
+            except NotImplementedError:
+                print("uh oh")
         drawings.append(Drawing(lines))
     return drawings
 
@@ -72,6 +75,44 @@ def n_gon(n: int, x: float, y: float, r: float) -> Polygon:
         [
             (x + r * np.cos(angle), y + r * np.sin(angle))
             for angle in np.linspace(0, 2 * np.pi, n, endpoint=False)
+        ]
+    )
+
+
+def x_shape(
+    x: float, y: float, r_inner: float, r_outer: float, angle_offset: float
+) -> Polygon:
+    outer_angles = [
+        np.pi / 4 - angle_offset,
+        np.pi / 4 + angle_offset,
+        3 * np.pi / 4 - angle_offset,
+        3 * np.pi / 4 + angle_offset,
+        5 * np.pi / 4 - angle_offset,
+        5 * np.pi / 4 + angle_offset,
+        7 * np.pi / 4 - angle_offset,
+        7 * np.pi / 4 + angle_offset,
+    ]
+    outer_points = [
+        (x + r_outer * np.cos(a), y + r_outer * np.sin(a)) for a in outer_angles
+    ]
+    inner_angles = [0, np.pi / 2, np.pi, 3 * np.pi / 2]
+    inner_points = [
+        (x + r_inner * np.cos(a), y + r_inner * np.sin(a)) for a in inner_angles
+    ]
+    return Polygon(
+        [
+            outer_points[0],
+            outer_points[1],
+            inner_points[1],
+            outer_points[2],
+            outer_points[3],
+            inner_points[2],
+            outer_points[4],
+            outer_points[5],
+            inner_points[3],
+            outer_points[6],
+            outer_points[7],
+            inner_points[0],
         ]
     )
 
@@ -108,8 +149,8 @@ def random_n_gons(
 
 @click.command()
 @click.option("-t", "--test", is_flag=True)
-@click.option("-w", "--width", prompt=True, type=float, default=8)
-@click.option("-h", "--height", prompt=True, type=float, default=8)
+@click.option("-w", "--width", prompt=True, type=float, default=7.87)
+@click.option("-h", "--height", prompt=True, type=float, default=7.87)
 @click.option("-m", "--margin", prompt=True, type=float, default=0.5)
 @click.option("-s", "--spokes", prompt=True, type=int, default=100)
 @click.option("-n", "--emitters", prompt=True, type=int)
@@ -136,7 +177,7 @@ def main(
     drawings = Drawing.multi_scale_to_fit(drawings, width, height, margin)
 
     if test or axi.device.find_port() is None:
-        im = Drawing.render_layers(drawings, bounds=(0, 0, 8, 8))
+        im = Drawing.render_layers(drawings, bounds=(0, 0, width, height))
         im.write_to_png("suns.png")
     else:
         axi.draw_layers(drawings)
