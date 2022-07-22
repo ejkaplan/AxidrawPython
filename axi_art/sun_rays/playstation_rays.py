@@ -23,10 +23,10 @@ def main(
         for angle in np.linspace(0, 2 * np.pi, 4, endpoint=False)
     ]
     emitters = [
-        n_gon(150, *centers[0], dw / 8),
-        x_shape(*centers[1], dw / 30, dw / 8, 0.2),
-        rotate(n_gon(4, *centers[2], dw / 7), 45, "center"),
-        rotate(n_gon(3, *centers[3], dw / 8), 30, "center"),
+        n_gon(150, *centers[0], dw / 8),  # Circle
+        x_shape(*centers[1], dw / 30, dw / 8, 0.2),  # X
+        rotate(n_gon(4, *centers[2], dw / 7), 45, "center"),  # Square
+        rotate(n_gon(3, *centers[3], dw / 8), 30, "center"),  # Triangle
     ]
     drawings = radial_drawing(dw, dh, emitters, spokes)
     drawings = [drawing.repeat().sort_paths() for drawing in drawings]
