@@ -1,4 +1,4 @@
-from itertools import combinations
+from itertools import combinations, permutations
 
 import axi
 import numpy as np
@@ -16,7 +16,7 @@ def make_tileset(colors: int) -> TileSet:
     tileset = TileSet((1, 1))
     turn = Drawing([[(0, 0.5), (0.5, 0.5), (0.5, 0)]])
     horizontal = Drawing([[(0, 0.5), (1, 0.5)]])
-    vertical = Drawing([[(0.5, 0), (0.5, 1)]])
+    under = Drawing([[(0.5, 0), (0.5, 0.4)], [(0.5, 0.6), (0.5, 1)]])
     for c in range(colors):
         t = tileset.make_tile({c: turn}, [-1, -1, c, c])
         for i in range(1, 4):
@@ -24,8 +24,8 @@ def make_tileset(colors: int) -> TileSet:
         t = tileset.make_tile({c: horizontal}, [c, -1, c, -1])
         t.rotate(1)
     tileset.make_tile(dict(), [-1, -1, -1, -1])
-    for c0, c1 in combinations(range(colors), 2):
-        t = tileset.make_tile({c0: horizontal, c1: vertical}, [c0, c1, c0, c1])
+    for c0, c1 in permutations(range(colors), 2):
+        t = tileset.make_tile({c0: horizontal, c1: under}, [c0, c1, c0, c1])
         t.rotate(1)
     return tileset
 
@@ -50,7 +50,7 @@ def make_drawings(
 def main():
     test = True
     rng = np.random.default_rng()
-    drawings = make_drawings(rng, 2, 20, 20)
+    drawings = make_drawings(rng, 3, 20, 20)
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(drawings)
         im.write_to_png("test.png")
