@@ -11,8 +11,6 @@ import numpy as np
 from axi import Drawing
 from tqdm import tqdm
 
-rng = np.random.default_rng()
-
 
 class TileSet:
     def __init__(self, tile_size: tuple[float, float]):
@@ -21,8 +19,8 @@ class TileSet:
         self.id_iter = count()
         self.adjacency_rules: np.ndarray | None = None
 
-    def make_tile(self, drawing: Drawing, edges: list[Any]) -> Tile:
-        tile = Tile(drawing, edges, self.tile_size, next(self.id_iter), self)
+    def make_tile(self, drawings: dict[int, Drawing], edges: list[Any]) -> Tile:
+        tile = Tile(drawings, edges, self.tile_size, next(self.id_iter), self)
         self.tiles.append(tile)
         return tile
 
@@ -46,20 +44,24 @@ class TileSet:
 
 @dataclass
 class Tile:
-    drawing: Drawing
+    drawing_layers: dict[int, Drawing]
     edges: list[Any]
     size: tuple[float, float]
     id: int
     parent: TileSet
 
     def rotate(self, n: int):
-        d = self.drawing.rotate(np.pi / 2 * n, (self.size[0] / 2, self.size[1] / 2))
+        new_layers = {
+            layer: d.rotate(np.pi / 2 * n, (self.size[0] / 2, self.size[1] / 2))
+            for layer, d in self.drawing_layers.items()
+        }
         edges = self.edges[4 - n :] + self.edges[: 4 - n]
-        return self.parent.make_tile(d, edges)
+        return self.parent.make_tile(new_layers, edges)
 
 
 @dataclass
 class Grid:
+    # TODO: Add "support" per https://www.boristhebrave.com/2020/04/13/wave-function-collapse-explained/
     grid: np.ndarray = field(init=False)
     tile_set: TileSet
     size: tuple[int, int]
@@ -90,18 +92,25 @@ class Grid:
             changed = changed or np.any(self.grid[r, c] != possible_old)
         return changed
 
-    def reduce_grid(self, start: tuple[int, int]) -> None:
-        frontier = deque([start])
+    def get_neighbors(self, coord: tuple[int, int]) -> list[tuple[int, int]]:
+        r, c = coord
+        neighbors = [(r, c + 1), (r + 1, c), (r, c - 1), (r - 1, c)]
+        neighbors = [
+            coord
+            for coord in neighbors
+            if coord[0] in range(self.size[0]) and coord[1] in range(self.size[1])
+        ]
+        return neighbors
+
+    def reduce_grid(self, start: tuple[int, int], incl_start: bool = False) -> None:
+        frontier = deque([start]) if incl_start else deque(self.get_neighbors(start))
         while frontier:
             r, c = frontier.pop()
             if self.reduce_cell(r, c):
-                neighbors = [(r, c + 1), (r + 1, c), (r, c - 1), (r - 1, c)]
                 neighbors = [
                     coord
-                    for coord in neighbors
-                    if coord[0] in range(self.size[0])
-                    and coord[1] in range(self.size[1])
-                    and coord not in frontier
+                    for coord in self.get_neighbors((r, c))
+                    if coord not in frontier
                 ]
                 frontier.extend(neighbors)
 
@@ -111,13 +120,14 @@ class Grid:
             return -1
         return np.count_nonzero(option_count != 1)
 
-    def guess(self) -> Generator[Grid, None, None]:
+    def guess(self, rng: np.random.Generator) -> Generator[Grid, None, None]:
         coords = [
             (r, c)
             for r in range(self.size[0])
             for c in range(self.size[1])
             if np.sum(self.grid[r, c]) > 1
         ]
+        rng.shuffle(coords)
         coords.sort(key=lambda x: np.sum(self.grid[x]))
         for coord in coords:
             options_order = np.where(self.grid[coord])[0]
@@ -128,37 +138,59 @@ class Grid:
                 new_options[option] = True
                 new_grid.grid[coord] = new_options
                 new_grid.reduce_grid(coord)
+                if new_grid.count_unfinished() == -1:
+                    continue
                 yield new_grid
 
+    def __str__(self):
+        out = ""
+        for r in range(self.size[0]):
+            for c in range(self.size[1]):
+                options = self.grid[r, c]
+                n = np.sum(options)
+                if n == 0:
+                    out += "X "
+                elif n == 1:
+                    out += f"{np.where(options)[0][0]} "
+                else:
+                    out += "? "
+            out += "\n"
+        return out
 
-def solve_grid(grid: Grid) -> Optional[Grid]:
+
+def solve_grid(grid: Grid, rng: np.random.Generator) -> Optional[Grid]:
+    grid.tile_set.make_adjacency_rules()
     total_cells = grid.size[0] * grid.size[1]
     if grid.count_unfinished() == 0:
         return grid
-    frontier = deque([grid.guess()])
+    frontier = deque([grid.guess(rng)])
     t = tqdm(total=total_cells)
+    attempts = 0
     while len(frontier) > 0:
         try:
             grid = next(frontier[-1])
-            if (unfinished := grid.count_unfinished()) == -1:
-                continue
+            unfinished = grid.count_unfinished()
             t.n = total_cells - unfinished
             t.refresh()
             if unfinished == 0:
                 return grid
-            frontier.append(grid.guess())
+            frontier.append(grid.guess(rng))
         except StopIteration:
             frontier.pop()
+        attempts += 1
     t.close()
 
 
-def draw_grid(grid: Grid) -> Drawing:
-    out = Drawing()
+def draw_grid(grid: Grid) -> list[Drawing]:
+    out: list[Drawing] = []
     for r in range(grid.size[0]):
         for c in range(grid.size[1]):
             idx = np.where(grid.grid[r, c])[0][0]
             tile = grid.tile_set[idx]
-            out.add(tile.drawing.translate(c * tile.size[0], r * tile.size[1]))
+            for layer, drawing in tile.drawing_layers.items():
+                while len(out) < layer + 1:
+                    out.append(Drawing())
+                out[layer].add(drawing.translate(c * tile.size[0], r * tile.size[1]))
     return out
 
 
@@ -166,17 +198,16 @@ def main():
     test = True
     tileset = TileSet((1, 1))
     L_drawing = Drawing([[(0, 0.5), (0.5, 0.5), (0.5, 0)]])
-    tile0 = tileset.make_tile(L_drawing, [0, 0, 1, 1])
+    tile0 = tileset.make_tile({0: L_drawing}, [0, 0, 1, 1])
     for i in range(1, 4):
         tile0.rotate(i)
     straight_drawing = Drawing([[(0, 0.5), (1, 0.5)]])
-    tile1 = tileset.make_tile(straight_drawing, [1, 0, 1, 0])
+    tile1 = tileset.make_tile({0: straight_drawing}, [1, 0, 1, 0])
     tile1.rotate(1)
-    tileset.make_adjacency_rules()
-    grid = Grid(tileset, (30, 30))
-    grid = solve_grid(grid)
-    d = draw_grid(grid).scale_to_fit(8, 8, 0.5).center(8, 8).join_paths(0.01)
-    drawings = [d]
+    grid = Grid(tileset, (8, 8))
+    grid = solve_grid(grid, np.random.default_rng(12))
+    drawings = Drawing.multi_scale_to_fit(draw_grid(grid), 8, 8)
+    drawings = [drawing.join_paths(0.01).sort_paths() for drawing in drawings]
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(drawings, bounds=(0, 0, 8, 8))
         im.write_to_png("test.png")
