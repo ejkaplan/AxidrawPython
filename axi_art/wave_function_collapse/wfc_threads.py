@@ -66,9 +66,7 @@ def make_drawings(
             grid = solve_grid(grid, rng)
             drawings = draw_grid(grid)
             drawings = Drawing.multi_scale_to_fit(drawings, 8, 8, 0.5)
-            print([len(d.paths) for d in drawings])
             drawings = [d.join_paths(0.01).sort_paths() for d in drawings]
-            print([len(d.paths) for d in drawings])
             break
         except ZeroDivisionError:
             pass
