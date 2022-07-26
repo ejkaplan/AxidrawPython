@@ -17,16 +17,24 @@ def make_tileset(colors: int) -> TileSet:
     turn = Drawing([[(0, 0.5), (0.5, 0.5), (0.5, 0)]])
     horizontal = Drawing([[(0, 0.5), (1, 0.5)]])
     under = Drawing([[(0.5, 0), (0.5, 0.4)], [(0.5, 0.6), (0.5, 1)]])
+    dead_end = Drawing(
+        [[(0, 0.5), (0.5, 0.5)], [(0.4, 0.4), (0.6, 0.4), (0.6, 0.6), (0.4, 0.6)]]
+    )
     for c in range(colors):
-        t = tileset.make_tile({c: turn}, [-1, -1, c, c])
+        t = tileset.make_tile({c: turn}, [-1, -1, c, c])  # single color turn
         for i in range(1, 4):
             t.rotate(i)
-        t = tileset.make_tile({c: horizontal}, [c, -1, c, -1])
+        t = tileset.make_tile({c: horizontal}, [c, -1, c, -1])  # single color straight
         t.rotate(1)
-    tileset.make_tile(dict(), [-1, -1, -1, -1])
+        # t = tileset.make_tile({c: dead_end}, [-1, -1, c, -1])
+        # for i in range(1, 4):
+        #     t.rotate(i)
     for c0, c1 in permutations(range(colors), 2):
+        # 2 color crossovers
         t = tileset.make_tile({c0: horizontal, c1: under}, [c0, c1, c0, c1])
         t.rotate(1)
+    # blank tile
+    # tileset.make_tile(dict(), [-1, -1, -1, -1])
     return tileset
 
 
@@ -49,8 +57,8 @@ def make_drawings(
 
 def main():
     test = True
-    rng = np.random.default_rng()
-    drawings = make_drawings(rng, 3, 20, 20)
+    rng = np.random.default_rng(19)
+    drawings = make_drawings(rng, 5, 50, 50)
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(drawings)
         im.write_to_png("test.png")

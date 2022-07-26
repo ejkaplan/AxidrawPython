@@ -61,7 +61,6 @@ class Tile:
 
 @dataclass
 class Grid:
-    # TODO: Add "support" per https://www.boristhebrave.com/2020/04/13/wave-function-collapse-explained/
     grid: np.ndarray = field(init=False)
     tile_set: TileSet
     size: tuple[int, int]
@@ -76,43 +75,42 @@ class Grid:
 
     def reduce_cell(self, r: int, c: int) -> bool:
         changed = False
+        neighbors = self.get_neighbors((r, c))
+        for d, coord in neighbors.items():
+            neighbor_tiles = self.grid[coord[0], coord[1], :]
+            allowed = np.any(
+                self.tile_set.adjacency_rules[(d + 2) % 4, neighbor_tiles, :], axis=0
+            )
+            possible_old = self.grid[r, c].copy()
+            self.grid[r, c] = np.logical_and(self.grid[r, c], allowed)
+            neighbor_allowed = np.any(
+                self.tile_set.adjacency_rules[d, :, neighbor_tiles], axis=0
+            )
+            self.grid[r, c] = np.logical_and(self.grid[r, c], neighbor_allowed)
+            changed = changed or np.any(self.grid[r, c] != possible_old)
+        return changed
+
+    def get_neighbors(self, coord: tuple[int, int]) -> dict[int, tuple[int, int]]:
+        r, c = coord
         neighbors = {0: (r, c + 1), 1: (r + 1, c), 2: (r, c - 1), 3: (r - 1, c)}
         neighbors = {
             edge: coord
             for edge, coord in neighbors.items()
             if coord[0] in range(self.size[0]) and coord[1] in range(self.size[1])
         }
-        for d, coord in neighbors.items():
-            neighbor_tiles = self.grid[coord[0], coord[1], :]
-            allowed = np.any(
-                self.tile_set.adjacency_rules[(d + 2) % 4, neighbor_tiles, :], axis=0
-            )
-            possible_old = self.grid[r, c]
-            self.grid[r, c] = np.logical_and(possible_old, allowed)
-            changed = changed or np.any(self.grid[r, c] != possible_old)
-        return changed
-
-    def get_neighbors(self, coord: tuple[int, int]) -> list[tuple[int, int]]:
-        r, c = coord
-        neighbors = [(r, c + 1), (r + 1, c), (r, c - 1), (r - 1, c)]
-        neighbors = [
-            coord
-            for coord in neighbors
-            if coord[0] in range(self.size[0]) and coord[1] in range(self.size[1])
-        ]
         return neighbors
 
-    def reduce_grid(self, start: tuple[int, int], incl_start: bool = False) -> None:
-        frontier = deque([start]) if incl_start else deque(self.get_neighbors(start))
+    def reduce_grid(self, start: tuple[int, int]) -> None:
+        frontier = set(self.get_neighbors(start).values())
         while frontier:
             r, c = frontier.pop()
             if self.reduce_cell(r, c):
-                neighbors = [
+                neighbors = set(
                     coord
-                    for coord in self.get_neighbors((r, c))
+                    for coord in self.get_neighbors((r, c)).values()
                     if coord not in frontier
-                ]
-                frontier.extend(neighbors)
+                )
+                frontier |= neighbors
 
     def count_unfinished(self) -> int:
         option_count = np.sum(self.grid, axis=2)
@@ -149,11 +147,11 @@ class Grid:
                 options = self.grid[r, c]
                 n = np.sum(options)
                 if n == 0:
-                    out += "X "
+                    out += "X  "
                 elif n == 1:
-                    out += f"{np.where(options)[0][0]} "
+                    out += f"{np.where(options)[0][0]:<3}"
                 else:
-                    out += "? "
+                    out += "?  "
             out += "\n"
         return out
 
