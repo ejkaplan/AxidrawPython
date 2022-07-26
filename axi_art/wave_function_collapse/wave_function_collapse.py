@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from itertools import count
 from typing import Any, Generator, Optional
 
-import axi
 import numpy as np
 from axi import Drawing
 from tqdm import tqdm
@@ -190,28 +189,3 @@ def draw_grid(grid: Grid) -> list[Drawing]:
                     out.append(Drawing())
                 out[layer].add(drawing.translate(c * tile.size[0], r * tile.size[1]))
     return out
-
-
-def main():
-    test = True
-    tileset = TileSet((1, 1))
-    L_drawing = Drawing([[(0, 0.5), (0.5, 0.5), (0.5, 0)]])
-    tile0 = tileset.make_tile({0: L_drawing}, [0, 0, 1, 1])
-    for i in range(1, 4):
-        tile0.rotate(i)
-    straight_drawing = Drawing([[(0, 0.5), (1, 0.5)]])
-    tile1 = tileset.make_tile({0: straight_drawing}, [1, 0, 1, 0])
-    tile1.rotate(1)
-    grid = Grid(tileset, (8, 8))
-    grid = solve_grid(grid, np.random.default_rng(12))
-    drawings = Drawing.multi_scale_to_fit(draw_grid(grid), 8, 8)
-    drawings = [drawing.join_paths(0.01).sort_paths() for drawing in drawings]
-    if test or axi.device.find_port() is None:
-        im = Drawing.render_layers(drawings, bounds=(0, 0, 8, 8))
-        im.write_to_png("test.png")
-    else:
-        axi.draw_layers(drawings)
-
-
-if __name__ == "__main__":
-    main()
