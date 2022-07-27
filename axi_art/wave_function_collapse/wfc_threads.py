@@ -14,7 +14,6 @@ from axi_art.wave_function_collapse.wave_function_collapse import (
 
 def make_tileset(colors: int) -> TileSet:
     tileset = TileSet((1, 1))
-    hard_turn = Drawing([[(0, 0.5), (0.5, 0.5), (0.5, 0)]])
     circle_turn = Drawing(
         [
             [
@@ -38,20 +37,12 @@ def make_tileset(colors: int) -> TileSet:
         ]
     )
     for c in range(colors):
-        t = tileset.make_tile({c: circle_turn}, [-1, -1, c, c], weight=0.5)
-        for i in range(1, 4):
-            t.rotate(i)
-        t = tileset.make_tile({c: horizontal}, [c, -1, c, -1])
-        t.rotate(1)
-        t = tileset.make_tile({c: dead_end}, [-1, -1, c, -1], weight=0.001)
-        for i in range(1, 4):
-            t.rotate(i)
-        t = tileset.make_tile({c: t_junction}, [c, -1, c, c], weight=0.01)
-        for i in range(1, 4):
-            t.rotate(i)
+        tileset.make_tile({c: circle_turn}, [-1, -1, c, c], 4)
+        tileset.make_tile({c: horizontal}, [c, -1, c, -1], 2)
+        tileset.make_tile({c: dead_end}, [-1, -1, c, -1], 4, weight=0)
+        tileset.make_tile({c: t_junction}, [c, -1, c, c], 4, True, weight=0.1)
     for c0, c1 in permutations(range(colors), 2):
-        t = tileset.make_tile({c0: horizontal, c1: under}, [c0, c1, c0, c1], weight=0.5)
-        t.rotate(1)
+        tileset.make_tile({c0: horizontal, c1: under}, [c0, c1, c0, c1], 2)
     # blank tile
     tileset.make_tile(dict(), [-1, -1, -1, -1], weight=10)
     return tileset
@@ -72,8 +63,8 @@ def make_drawings(
 
 def main():
     test = True
-    rng = np.random.default_rng(10)
-    drawings = make_drawings(rng, 4, 20, 30)
+    rng = np.random.default_rng()
+    drawings = make_drawings(rng, 3, 30, 30)
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(drawings)
         im.write_to_png("test.png")

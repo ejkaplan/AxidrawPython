@@ -15,15 +15,31 @@ class TileSet:
     def __init__(self, tile_size: tuple[float, float]):
         self.tile_size = tile_size
         self.tiles: list[Tile] = []
-        self.id_iter = count()
         self.adjacency_rules: np.ndarray | None = None
 
     def make_tile(
-        self, drawings: dict[int, Drawing], edges: list[Any], weight: float = 1.0
-    ) -> Tile:
-        tile = Tile(drawings, edges, self.tile_size, next(self.id_iter), self, weight)
-        self.tiles.append(tile)
-        return tile
+        self,
+        drawings: dict[int, Drawing],
+        edges: list[Any],
+        rotations: int = 1,
+        mirror: bool = False,
+        weight: float = 1.0,
+    ) -> list[Tile]:
+        if weight <= 0:
+            weight = 1e-10
+        tile = Tile(drawings, edges, self.tile_size, self, weight)
+        created = []
+        for i in range(rotations):
+            rotated = tile.rotate(i)
+            self.tiles.append(rotated)
+            created.append(rotated)
+        if mirror:
+            mirrored = tile.mirror()
+            for i in range(rotations):
+                rotated = mirrored.rotate(i)
+                self.tiles.append(rotated)
+                created.append(rotated)
+        return created
 
     def __len__(self) -> int:
         return len(self.tiles)
@@ -48,17 +64,37 @@ class Tile:
     drawing_layers: dict[int, Drawing]
     edges: list[Any]
     size: tuple[float, float]
-    id: int
     parent: TileSet
     weight: float = 1.0
+
+    def __eq__(self, other: Tile):
+        if self.drawing_layers.keys() != other.drawing_layers.keys():
+            return False
+        for layer, drawing in self.drawing_layers.items():
+            if other.drawing_layers[layer] != drawing:
+                return False
+        return (
+            self.parent == other.parent
+            and self.weight == other.weight
+            and self.size == other.size
+            and self.edges == other.edges
+        )
 
     def rotate(self, n: int):
         new_layers = {
             layer: d.rotate(np.pi / 2 * n, (self.size[0] / 2, self.size[1] / 2))
             for layer, d in self.drawing_layers.items()
         }
-        edges = self.edges[4 - n :] + self.edges[: 4 - n]
-        return self.parent.make_tile(new_layers, edges, self.weight)
+        new_edges = self.edges[4 - n :] + self.edges[: 4 - n]
+        return Tile(new_layers, new_edges, self.size, self.parent, self.weight)
+
+    def mirror(self):
+        new_layers = {
+            layer: d.scale(-1, 1).translate(self.size[0], 0)
+            for layer, d in self.drawing_layers.items()
+        }
+        new_edges = [self.edges[2], self.edges[1], self.edges[0], self.edges[3]]
+        return Tile(new_layers, new_edges, self.size, self.parent, self.weight)
 
 
 def entropy(probs: np.ndarray) -> float:

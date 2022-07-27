@@ -56,3 +56,12 @@ def test_grid_status():
     assert grid.count_unfinished() == 1
     grid.grid[0, 0, 0] = False
     assert grid.count_unfinished() == -1
+
+
+def test_equality():
+    ts = TileSet((1, 1))
+    a = ts.make_tile({0: Drawing()}, [0, 0, 1, 1])[0]  # angle
+    b = ts.make_tile({0: Drawing()}, [0, 1, 0, 1])[0]  # vertical
+    assert a == a.rotate(4)
+    assert a != b
+    assert a.rotate(4) in [a, b]
