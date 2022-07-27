@@ -43,10 +43,10 @@ def make_tileset(colors: int) -> TileSet:
             t.rotate(i)
         t = tileset.make_tile({c: horizontal}, [c, -1, c, -1])
         t.rotate(1)
-        t = tileset.make_tile({c: dead_end}, [-1, -1, c, -1], weight=0.1)
+        t = tileset.make_tile({c: dead_end}, [-1, -1, c, -1], weight=0.001)
         for i in range(1, 4):
             t.rotate(i)
-        t = tileset.make_tile({c: t_junction}, [c, -1, c, c], weight=0.1)
+        t = tileset.make_tile({c: t_junction}, [c, -1, c, c], weight=0.01)
         for i in range(1, 4):
             t.rotate(i)
     for c0, c1 in permutations(range(colors), 2):
@@ -60,24 +60,20 @@ def make_tileset(colors: int) -> TileSet:
 def make_drawings(
     rng: np.random.Generator, colors: int, rows: int, cols: int
 ) -> list[Drawing]:
-    while True:
-        try:
-            tileset = make_tileset(colors)
-            grid = Grid(tileset, (rows, cols))
-            grid = solve_grid(grid, rng)
-            drawings = draw_grid(grid)
-            drawings = Drawing.multi_scale_to_fit(drawings, 8, 8, 0.5)
-            drawings = [d.join_paths(0.01).sort_paths() for d in drawings]
-            break
-        except ZeroDivisionError:
-            pass
+    tileset = make_tileset(colors)
+    grid = Grid(tileset, (rows, cols))
+    grid = solve_grid(grid, rng)
+    drawings = draw_grid(grid)
+    drawings = Drawing.multi_scale_to_fit(drawings, 8, 8, 0.5)
+    drawings = [d.sort_paths() for d in drawings]  # TODO: Fix join paths
+    # drawings = [d.join_paths(0.01).sort_paths() for d in drawings]
     return drawings
 
 
 def main():
     test = True
-    rng = np.random.default_rng()
-    drawings = make_drawings(rng, 4, 30, 30)
+    rng = np.random.default_rng(10)
+    drawings = make_drawings(rng, 4, 20, 30)
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(drawings)
         im.write_to_png("test.png")
