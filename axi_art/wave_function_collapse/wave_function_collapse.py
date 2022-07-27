@@ -18,8 +18,10 @@ class TileSet:
         self.id_iter = count()
         self.adjacency_rules: np.ndarray | None = None
 
-    def make_tile(self, drawings: dict[int, Drawing], edges: list[Any]) -> Tile:
-        tile = Tile(drawings, edges, self.tile_size, next(self.id_iter), self)
+    def make_tile(
+        self, drawings: dict[int, Drawing], edges: list[Any], weight: float = 1.0
+    ) -> Tile:
+        tile = Tile(drawings, edges, self.tile_size, next(self.id_iter), self, weight)
         self.tiles.append(tile)
         return tile
 
@@ -48,6 +50,7 @@ class Tile:
     size: tuple[float, float]
     id: int
     parent: TileSet
+    weight: float = 1.0
 
     def rotate(self, n: int):
         new_layers = {
@@ -55,21 +58,44 @@ class Tile:
             for layer, d in self.drawing_layers.items()
         }
         edges = self.edges[4 - n :] + self.edges[: 4 - n]
-        return self.parent.make_tile(new_layers, edges)
+        return self.parent.make_tile(new_layers, edges, self.weight)
+
+
+def entropy(probs: np.ndarray) -> float:
+    probs = probs[probs != 0]
+    return -np.sum(probs * np.log2(probs))
 
 
 @dataclass
 class Grid:
     grid: np.ndarray = field(init=False)
+    probs: np.ndarray = field(init=False)
+    entropy: np.ndarray = field(init=False)
     tile_set: TileSet
     size: tuple[int, int]
 
     def __post_init__(self):
         self.grid = np.ones((*self.size, len(self.tile_set)), dtype=bool)
+        self.probs = np.array(
+            [
+                [[t.weight for t in self.tile_set.tiles] for _ in range(self.size[1])]
+                for __ in range(self.size[0])
+            ]
+        )
+        cell_sums = np.sum(self.probs, axis=2)
+        self.probs /= cell_sums[:, :, np.newaxis]
+        e = entropy(self.probs[0, 0])
+        self.entropy = np.ones(self.size) * e
+
+    def recalculate_probs(self, r: int, c: int):
+        self.probs[r, c] *= self.grid[r, c]
+        self.probs[r, c] /= np.sum(self.probs[r, c])
+        self.entropy[r, c] = entropy(self.probs[r, c])
 
     def __copy__(self) -> Grid:
         g = Grid(self.tile_set, self.size)
         g.grid = self.grid.copy()
+        g.probs = self.probs.copy()
         return g
 
     def reduce_cell(self, r: int, c: int) -> bool:
@@ -87,6 +113,8 @@ class Grid:
             )
             self.grid[r, c] = np.logical_and(self.grid[r, c], neighbor_allowed)
             changed = changed or np.any(self.grid[r, c] != possible_old)
+        if changed:
+            self.recalculate_probs(r, c)
         return changed
 
     def get_neighbors(self, coord: tuple[int, int]) -> dict[int, tuple[int, int]]:
@@ -125,10 +153,15 @@ class Grid:
             if np.sum(self.grid[r, c]) > 1
         ]
         rng.shuffle(coords)
-        coords.sort(key=lambda x: np.sum(self.grid[x]))
+        coords.sort(key=lambda x: self.entropy[x])
         for coord in coords:
-            options_order = np.where(self.grid[coord])[0]
-            rng.shuffle(options_order)
+            tiles_available = int(np.sum(self.grid[coord]))
+            options_order = rng.choice(
+                range(len(self.tile_set)),
+                tiles_available,
+                replace=False,
+                p=self.probs[coord],
+            )
             for option in options_order:
                 new_grid = copy(self)
                 new_options = np.zeros(len(self.tile_set), dtype=bool)

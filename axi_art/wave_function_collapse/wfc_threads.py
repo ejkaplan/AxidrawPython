@@ -14,7 +14,7 @@ from axi_art.wave_function_collapse.wave_function_collapse import (
 
 def make_tileset(colors: int) -> TileSet:
     tileset = TileSet((1, 1))
-    turn = Drawing([[(0, 0.5), (0.5, 0.5), (0.5, 0)]])
+    hard_turn = Drawing([[(0, 0.5), (0.5, 0.5), (0.5, 0)]])
     circle_turn = Drawing(
         [
             [
@@ -24,6 +24,9 @@ def make_tileset(colors: int) -> TileSet:
         ]
     )
     horizontal = Drawing([[(0, 0.5), (1, 0.5)]])
+    t_junction = Drawing()
+    t_junction.add(horizontal)
+    t_junction.add(circle_turn)
     under = Drawing([[(0.5, 0), (0.5, 0.3)], [(0.5, 0.7), (0.5, 1)]])
     dead_end = Drawing(
         [
@@ -35,24 +38,22 @@ def make_tileset(colors: int) -> TileSet:
         ]
     )
     for c in range(colors):
-        t = tileset.make_tile({c: circle_turn}, [-1, -1, c, c])
+        t = tileset.make_tile({c: circle_turn}, [-1, -1, c, c], weight=0.5)
         for i in range(1, 4):
             t.rotate(i)
         t = tileset.make_tile({c: horizontal}, [c, -1, c, -1])
         t.rotate(1)
-        t = tileset.make_tile({c: dead_end}, [-1, -1, c, -1])
+        t = tileset.make_tile({c: dead_end}, [-1, -1, c, -1], weight=0.1)
+        for i in range(1, 4):
+            t.rotate(i)
+        t = tileset.make_tile({c: t_junction}, [c, -1, c, c], weight=0.1)
         for i in range(1, 4):
             t.rotate(i)
     for c0, c1 in permutations(range(colors), 2):
-        t = tileset.make_tile({c0: horizontal, c1: under}, [c0, c1, c0, c1])
+        t = tileset.make_tile({c0: horizontal, c1: under}, [c0, c1, c0, c1], weight=0.5)
         t.rotate(1)
-        # t = tileset.make_tile(
-        #     {c0: circle_turn, c1: circle_turn.rotate(np.pi, (0.5, 0.5))},
-        #     [c1, c1, c0, c0],
-        # )
-        # t.rotate(1)
     # blank tile
-    # tileset.make_tile(dict(), [-1, -1, -1, -1])
+    tileset.make_tile(dict(), [-1, -1, -1, -1], weight=10)
     return tileset
 
 
@@ -76,7 +77,7 @@ def make_drawings(
 def main():
     test = True
     rng = np.random.default_rng()
-    drawings = make_drawings(rng, 5, 30, 30)
+    drawings = make_drawings(rng, 4, 30, 30)
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(drawings)
         im.write_to_png("test.png")
