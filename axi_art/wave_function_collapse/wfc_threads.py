@@ -38,13 +38,13 @@ def make_tileset(colors: int) -> TileSet:
     )
     for c in range(colors):
         tileset.make_tile({c: circle_turn}, [-1, -1, c, c], 4)
-        tileset.make_tile({c: horizontal}, [c, -1, c, -1], 2)
+        tileset.make_tile({c: horizontal}, [c, -1, c, -1], 2, weight=2)
         tileset.make_tile({c: dead_end}, [-1, -1, c, -1], 4, weight=0)
-        tileset.make_tile({c: t_junction}, [c, -1, c, c], 4, True, weight=0.1)
+        tileset.make_tile({c: t_junction}, [c, -1, c, c], 4, True, weight=0)
     for c0, c1 in permutations(range(colors), 2):
-        tileset.make_tile({c0: horizontal, c1: under}, [c0, c1, c0, c1], 2)
+        tileset.make_tile({c0: horizontal, c1: under}, [c0, c1, c0, c1], 2, weight=10)
     # blank tile
-    tileset.make_tile(dict(), [-1, -1, -1, -1], weight=10)
+    tileset.make_tile(dict(), [-1, -1, -1, -1], weight=5)
     return tileset
 
 
@@ -64,7 +64,7 @@ def make_drawings(
 def main():
     test = True
     rng = np.random.default_rng()
-    drawings = make_drawings(rng, 3, 30, 30)
+    drawings = make_drawings(rng, 3, 20, 20)
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(drawings)
         im.write_to_png("test.png")

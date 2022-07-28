@@ -124,6 +124,8 @@ class Grid:
         self.entropy = np.ones(self.size) * e
 
     def recalculate_probs(self, r: int, c: int):
+        if not np.any(self.grid[r, c]):
+            return
         self.probs[r, c] *= self.grid[r, c]
         self.probs[r, c] /= np.sum(self.probs[r, c])
         self.entropy[r, c] = entropy(self.probs[r, c])
