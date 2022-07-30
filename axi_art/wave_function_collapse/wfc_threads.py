@@ -26,7 +26,7 @@ def make_tileset(colors: int) -> TileSet:
     t_junction = Drawing()
     t_junction.add(horizontal)
     t_junction.add(circle_turn)
-    under = Drawing([[(0.5, 0), (0.5, 0.3)], [(0.5, 0.7), (0.5, 1)]])
+    under = Drawing([[(0.5, 0), (0.5, 0.35)], [(0.5, 0.65), (0.5, 1)]])
     dead_end = Drawing(
         [
             [(0, 0.5), (0.5, 0.5)],
@@ -55,15 +55,16 @@ def make_drawings(
     grid = Grid(tileset, (rows, cols))
     grid = solve_grid(grid, rng)
     drawings = draw_grid(grid)
+    print([len(d.paths) for d in drawings])
     drawings = Drawing.multi_scale_to_fit(drawings, 8, 8, 0.5)
-    drawings = [d.sort_paths() for d in drawings]  # TODO: Fix join paths
-    # drawings = [d.join_paths(0.01).sort_paths() for d in drawings]
+    drawings = [d.join_paths(0.001).sort_paths() for d in drawings]
+    print([len(d.paths) for d in drawings])
     return drawings
 
 
 def main():
     test = True
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(0)
     drawings = make_drawings(rng, 3, 20, 20)
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(drawings)
