@@ -156,7 +156,12 @@ class Grid:
 
     def get_neighbors(self, coord: tuple[int, int]) -> dict[int, tuple[int, int]]:
         r, c = coord
-        neighbors = {0: (r, c + 1), 1: (r + 1, c), 2: (r, c - 1), 3: (r - 1, c)}
+        neighbors = {
+            0: (r, (c + 1) % self.size[1]),
+            1: ((r + 1) % self.size[0], c),
+            2: (r, (c - 1) % self.size[1]),
+            3: ((r - 1) % self.size[0], c),
+        }
         neighbors = {
             edge: coord
             for edge, coord in neighbors.items()

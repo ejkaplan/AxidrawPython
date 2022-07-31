@@ -64,7 +64,7 @@ def make_drawings(
 
 def main():
     test = True
-    rng = np.random.default_rng(0)
+    rng = np.random.default_rng()
     drawings = make_drawings(rng, 3, 20, 20)
     if test or axi.device.find_port() is None:
         im = Drawing.render_layers(drawings)
